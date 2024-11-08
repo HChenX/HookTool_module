@@ -57,6 +57,9 @@ public class HookFactory {
             try {
                 iHook.MethodHookParam(param);
                 iHook.after();
+                if (iHook.mShouldObserveCall) {
+                    iHook.observeCall();
+                }
             } catch (Throwable e) {
                 logE(iHook.PRIVATETAG + ":after", "Waring! will stop hook process!!", e);
             }

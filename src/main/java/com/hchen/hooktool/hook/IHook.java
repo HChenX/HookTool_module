@@ -23,11 +23,12 @@ import com.hchen.hooktool.tool.ParamTool;
 
 /**
  * Hook 动作接口
- * 
+ *
  * @author 焕晨HChen
  */
 public abstract class IHook extends ParamTool {
     public final int PRIORITY;
+    public boolean mShouldObserveCall = true;
 
     public IHook() {
         this.PRIORITY = Priority.DEFAULT;
@@ -47,5 +48,10 @@ public abstract class IHook extends ParamTool {
      * 在目标方法调用后回调。
      */
     public void after() {
+    }
+
+    public IHook shouldObserveCall(boolean should) {
+        mShouldObserveCall = should;
+        return this;
     }
 }

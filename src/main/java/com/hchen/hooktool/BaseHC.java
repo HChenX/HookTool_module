@@ -50,12 +50,15 @@ public abstract class BaseHC extends CoreTool {
         lpparam = ToolData.lpparam;
         classLoader = ToolData.classLoader;
     }
-    
+
     /**
      * 一般阶段。
      */
     // 作为覆写使用，请勿直接调用！
     public abstract void init();
+
+    public void copy() {
+    }
 
     /**
      * zygote 阶段。
@@ -71,6 +74,7 @@ public abstract class BaseHC extends CoreTool {
     final public void onLoadPackage() {
         try {
             init();
+            copy();
         } catch (Throwable e) {
             logE(TAG, e);
         }
@@ -83,7 +87,7 @@ public abstract class BaseHC extends CoreTool {
             logE(TAG, e);
         }
     }
-    
+
     public static void chain(String clazz, ChainTool chain) {
         ChainTool.chain(clazz, chain);
     }

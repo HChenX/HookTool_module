@@ -60,6 +60,7 @@ public class ChainTool {
     private final ArrayList<ChainData> chainDataList = new ArrayList<>(); // 链式数据
     private final ArrayList<ChainData> cacheDataList = new ArrayList<>(); // 暂时的缓存数据
     private final HashSet<Member> existingMembers = new HashSet<>();
+    private IHook mIHook;
 
     public ChainTool() {
         chainHook = new ChainHook(this);
@@ -109,6 +110,11 @@ public class ChainTool {
         return chainHook;
     }
 
+    public ChainTool shouldObserveCall(boolean should) {
+        mIHook.shouldObserveCall(should);
+        return this;
+    }
+
     // 各种奇奇怪怪的添加 >.<
     private void doFind(Class<?> clazz) {
         if (clazz == null) return;
@@ -122,19 +128,19 @@ public class ChainTool {
             String UUID = cacheData.mType + "#" + clazz.getName() + "#" + cacheData.mName + "#" + Arrays.toString(cacheData.mParams);
             switch (cacheData.mType) {
                 case TYPE_METHOD -> members.add(new ChainData(
-                        findMethod(clazz, cacheData.mName, arrayToClass(
-                                classLoader == null ? ToolData.classLoader : classLoader,
-                                cacheData.mParams)).get()));
+                    findMethod(clazz, cacheData.mName, arrayToClass(
+                        classLoader == null ? ToolData.classLoader : classLoader,
+                        cacheData.mParams)).get()));
                 case TYPE_CONSTRUCTOR -> members.add(new ChainData(
-                        findConstructor(clazz, arrayToClass(
-                                classLoader == null ? ToolData.classLoader : classLoader,
-                                cacheData.mParams)).get()));
+                    findConstructor(clazz, arrayToClass(
+                        classLoader == null ? ToolData.classLoader : classLoader,
+                        cacheData.mParams)).get()));
                 case TYPE_ANY_METHOD ->
-                        members.addAll(CoreTool.findAllMethod(clazz, cacheData.mName).stream().map(
-                                ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
+                    members.addAll(CoreTool.findAllMethod(clazz, cacheData.mName).stream().map(
+                        ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
                 case TYPE_ANY_CONSTRUCTOR ->
-                        members.addAll(CoreTool.findAllConstructor(clazz).stream().map(
-                                ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
+                    members.addAll(CoreTool.findAllConstructor(clazz).stream().map(
+                        ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
                 default -> {
                     logW(getTag(), "Unknown type: " + cacheData.mType + getStackTrace());
                     members.clear();
@@ -149,7 +155,7 @@ public class ChainTool {
                     if (memberData.member == null || existingMembers.contains(memberData.member)) {
                         iterator.remove();
                         logW(getTag(), "This member maybe repeated or maybe is null, will remove it! " +
-                                "\ndebug: " + UUID + "#member: " + memberData.member);
+                            "\ndebug: " + UUID + "#member: " + memberData.member);
                         continue;
                     }
                     existingMembers.add(memberData.member);
@@ -201,7 +207,7 @@ public class ChainTool {
          * Hook 动作。
          */
         public ChainTool hook(IHook iHook) {
-            chain.cacheData.iHook = iHook;
+            chain.cacheData.iHook = chain.mIHook = iHook;
             chain.cacheDataList.add(chain.cacheData);
             return chain;
         }
@@ -210,7 +216,7 @@ public class ChainTool {
          * 直接返回指定值。
          */
         public ChainTool returnResult(final Object result) {
-            chain.cacheData.iHook = CoreTool.returnResult(result);
+            chain.cacheData.iHook = chain.mIHook = CoreTool.returnResult(result);
             chain.cacheDataList.add(chain.cacheData);
             return chain;
         }
@@ -219,7 +225,7 @@ public class ChainTool {
          * 拦截方法执行。
          */
         public ChainTool doNothing() {
-            chain.cacheData.iHook = CoreTool.doNothing();
+            chain.cacheData.iHook = chain.mIHook = CoreTool.doNothing();
             chain.cacheDataList.add(chain.cacheData);
             return chain;
         }
