@@ -20,7 +20,6 @@ package com.hchen.hooktool.tool;
 
 import static com.hchen.hooktool.helper.ConvertHelper.arrayToClass;
 import static com.hchen.hooktool.helper.TryHelper.run;
-import static com.hchen.hooktool.helper.TryHelper.runDump;
 import static com.hchen.hooktool.hook.HookFactory.createHook;
 import static com.hchen.hooktool.log.LogExpand.getTag;
 import static com.hchen.hooktool.log.XposedLog.logD;
@@ -31,6 +30,7 @@ import static com.hchen.hooktool.tool.CoreBase.baseFilterConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFilterMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseFindAllConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFindAllMethod;
+import static com.hchen.hooktool.tool.CoreBase.baseFindClass;
 import static com.hchen.hooktool.tool.CoreBase.baseFindConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFindField;
 import static com.hchen.hooktool.tool.CoreBase.baseFindMethod;
@@ -85,8 +85,7 @@ public class CoreTool {
     }
 
     public static MemberData<Class<?>> findClass(String name, ClassLoader classLoader) {
-        return (MemberData<Class<?>>) (MemberData<?>) runDump(() -> XposedHelpers.findClass(name, classLoader))
-                .setErrMsg("Failed to find class!");
+        return baseFindClass(name, classLoader);
     }
 
     //------------ 检查指定方法是否存在 --------------
@@ -394,12 +393,12 @@ public class CoreTool {
     // ---------- 非静态 -----------
     public static <T> T callMethod(Object instance, String name, Object... objs) {
         return run(() -> (T) XposedHelpers.callMethod(instance, name, objs))
-                .orErrMag(null, "Failed to call method!");
+            .orErrMag(null, "Failed to call method!");
     }
 
     public static <T> T getField(Object instance, String name) {
         return run(() -> (T) XposedHelpers.getObjectField(instance, name))
-                .orErrMag(null, "Failed to get field!");
+            .orErrMag(null, "Failed to get field!");
     }
 
     public static <T> T getField(Object instance, Field field) {
@@ -426,17 +425,17 @@ public class CoreTool {
 
     public static <T> T setAdditionalInstanceField(Object instance, String key, Object value) {
         return run(() -> (T) XposedHelpers.setAdditionalInstanceField(instance, key, value))
-                .orErrMag(null, "Failed to set additional instance!");
+            .orErrMag(null, "Failed to set additional instance!");
     }
 
     public static <T> T getAdditionalInstanceField(Object instance, String key) {
         return run(() -> (T) XposedHelpers.getAdditionalInstanceField(instance, key))
-                .orErrMag(null, "Failed to get additional instance!");
+            .orErrMag(null, "Failed to get additional instance!");
     }
 
     public static <T> T removeAdditionalInstanceField(Object instance, String key) {
         return run(() -> (T) XposedHelpers.removeAdditionalInstanceField(instance, key))
-                .orErrMag(null, "Failed to remove additional instance!");
+            .orErrMag(null, "Failed to remove additional instance!");
     }
 
     // ---------- 静态 ------------
