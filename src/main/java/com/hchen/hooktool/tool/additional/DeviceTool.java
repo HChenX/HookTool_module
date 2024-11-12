@@ -122,6 +122,13 @@ public class DeviceTool {
         return SystemPropTool.getProp("persist.sys.miui_optimization", false);
     }
 
+    /**
+     * 获取系统是否已经启动完成。
+     */
+    public static boolean isBootCompleted() {
+        return SystemPropTool.getProp("sys.boot_completed", false);
+    }
+
     // --------- 手机品牌 -------------
     public static final String[] ROM_HUAWEI = {"huawei"};
     public static final String[] ROM_VIVO = {"vivo"};
@@ -193,8 +200,8 @@ public class DeviceTool {
         if (!isMoreAndroidVersion(Build.VERSION_CODES.Q)) return false;
         try {
             Object osBrand = InvokeTool.callStaticMethod(
-                    InvokeTool.findClass("com.huawei.system.BuildEx"),
-                    "getOsBrand", new Class[]{});
+                InvokeTool.findClass("com.huawei.system.BuildEx"),
+                "getOsBrand", new Class[]{});
             return "Harmony".equalsIgnoreCase(String.valueOf(osBrand));
         } catch (Throwable throwable) {
             logE(getTag(), throwable);
@@ -240,7 +247,7 @@ public class DeviceTool {
      */
     public static boolean isMiuiInternational() {
         return Boolean.TRUE.equals(getStaticField(
-                findClass("miui.os.Build", null), "IS_INTERNATIONAL_BUILD"));
+            findClass("miui.os.Build", null), "IS_INTERNATIONAL_BUILD"));
     }
 
     /**
@@ -248,7 +255,7 @@ public class DeviceTool {
      */
     public static boolean isDarkMode(Resources resources) {
         return (resources.getConfiguration().uiMode &
-                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+            Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
     }
 
     /**
@@ -268,13 +275,13 @@ public class DeviceTool {
      */
     public static boolean isMiuiPad() {
         return Boolean.TRUE.equals(getStaticField(
-                findClass("miui.os.Build", null), "IS_TABLET"));
+            findClass("miui.os.Build", null), "IS_TABLET"));
     }
 
     private static boolean isPadByProp() {
         String mDeviceType = getProp("ro.build.characteristics", "default");
         return (mDeviceType != null && mDeviceType.toLowerCase().contains("tablet"))
-                || getProp("persist.sys.muiltdisplay_type", 0) == 2;
+            || getProp("persist.sys.muiltdisplay_type", 0) == 2;
     }
 
     private static boolean isPadBySize(Context context) {

@@ -31,7 +31,6 @@ import com.hchen.hooktool.tool.itool.IContextGetter;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -41,13 +40,44 @@ import java.util.concurrent.Executors;
  */
 @SuppressLint({"PrivateApi", "SoonBlockedPrivateApi", "DiscouragedPrivateApi"})
 public class ContextTool {
-    @IntDef(value = {
-            FLAG_ALL,
-            FLAG_CURRENT_APP,
-            FlAG_ONLY_ANDROID
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface Duration {
+    /**
+     * 异步获取当前应用的 Context，为了防止过早获取导致的 null。
+     * 使用方法:
+     * <pre> {@code
+     * handler = new Handler();
+     * ContextTool.getAsyncContext(new IContextGetter() {
+     *   @Override
+     *   public void tryToFindContext(Context context) {
+     *      handler.post(new Runnable() {
+     *        @Override
+     *        public void run() {
+     *          Toast.makeText(context, "found context!", Toast.LENGTH_SHORT).show();
+     *        }
+     *      });
+     *   }
+     * }, true/false);
+     * }
+     * 当然 Handler 是可选项, 适用于 Toast 显示等场景。
+     * @param iContextGetter 回调获取 Context
+     * @author 焕晨HChen
+     */
+    public static void getAsyncContext(IContextGetter iContextGetter, @Duration int flag) {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            Context context = getContextNoLog(flag);
+            if (context == null) {
+                long time = System.currentTimeMillis();
+                long timeout = 10000; // 10秒
+                while (true) {
+                    long nowTime = System.currentTimeMillis();
+                    context = getContextNoLog(flag);
+                    if (context != null || nowTime - time > timeout) {
+                        break;
+                    }
+                }
+            }
+            // context 可能为 null 请注意判断
+            iContextGetter.tryToFindContext(context);
+        });
     }
 
     // 尝试全部
@@ -74,45 +104,13 @@ public class ContextTool {
         }
     }
 
-    /**
-     * 异步获取当前应用的 Context，为了防止过早获取导致的 null。
-     * 使用方法:
-     * <pre> {@code
-     * handler = new Handler();
-     * ContextTool.getAsyncContext(new IContextGetter() {
-     *   @Override
-     *   public void tryToFindContext(Context context) {
-     *      handler.post(new Runnable() {
-     *        @Override
-     *        public void run() {
-     *          Toast.makeText(context, "found context!", Toast.LENGTH_SHORT).show();
-     *        }
-     *      });
-     *   }
-     * }, true/false);
-     * }
-     * 当然 Handler 是可选项, 适用于 Toast 显示等场景。
-     * @param iContextGetter 回调获取 Context
-     * @author 焕晨HChen
-     */
-    public static void getAsyncContext(IContextGetter iContextGetter, boolean isSystem) {
-        ThreadPool.getInstance().submit(() -> {
-            Context context = getContextNoLog(isSystem ? FlAG_ONLY_ANDROID : FLAG_CURRENT_APP);
-            if (context == null) {
-                long time = System.currentTimeMillis();
-                long timeout = 10000; // 10秒
-                while (true) {
-                    long nowTime = System.currentTimeMillis();
-                    context = getContextNoLog(isSystem ? FlAG_ONLY_ANDROID : FLAG_CURRENT_APP);
-                    if (context != null || nowTime - time > timeout) {
-                        break;
-                    }
-                }
-                // context 可能为 null 请注意判断
-                iContextGetter.tryToFindContext(context);
-            }
-        });
-        ThreadPool.getInstance().shutdown();
+    @IntDef(value = {
+        FLAG_ALL,
+        FLAG_CURRENT_APP,
+        FlAG_ONLY_ANDROID
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface Duration {
     }
 
     private static Context invokeMethod(int flag) throws Throwable {
@@ -158,23 +156,5 @@ public class ContextTool {
             // context = (Context) getSystemContext.invoke(o);
         }
         return context;
-    }
-    
-    private static class ThreadPool {
-        private static final int NUM_THREADS = 5; // 定义线程池中线程的数量
-        private static volatile ExecutorService executor;
-
-        // 获取线程池实例
-        public static ExecutorService getInstance() {
-            if (executor == null || executor.isShutdown()) {
-                synchronized (ThreadPool.class) {
-                    if (executor == null || executor.isShutdown()) {
-                        // 创建一个具有固定数量线程的线程池, 如果已经关机则重新创建
-                        executor = Executors.newFixedThreadPool(NUM_THREADS);
-                    }
-                }
-            }
-            return executor;
-        }
     }
 }

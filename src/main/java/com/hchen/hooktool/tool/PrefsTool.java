@@ -109,7 +109,7 @@ public class PrefsTool {
                 }
                 asyncPrefs.async(context);
             }
-        }, false);
+        }, ContextTool.FLAG_CURRENT_APP);
     }
 
     private static XSharedPreferences currentXsp(String prefsName) {

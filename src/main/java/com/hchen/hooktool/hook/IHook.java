@@ -31,7 +31,7 @@ public abstract class IHook extends ParamTool {
     public boolean mShouldObserveCall = true;
 
     public IHook() {
-        this.PRIORITY = Priority.DEFAULT;
+        this.PRIORITY = Priority.HIGHEST;
     }
 
     public IHook(int priority) {

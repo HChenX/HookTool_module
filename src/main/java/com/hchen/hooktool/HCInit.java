@@ -47,15 +47,8 @@ public class HCInit {
     public static final int LOG_D = 4;
     // ------- END --------------
 
-    @IntDef(value = {
-            LOG_NONE,
-            LOG_I,
-            LOG_W,
-            LOG_E,
-            LOG_D
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface LogLevel {
+    public static void setLogFileRootName(String rootName) {
+        ToolData.mLogFileRootName = rootName;
     }
 
     // ---------- 初始化工具 ----------
@@ -144,6 +137,21 @@ public class HCInit {
      */
     public static void useLogExpand(@NotNull String[] path) {
         ToolData.logExpandPath = path;
+    }
+
+    public static void setModuleVersion(String version) {
+        ToolData.mModuleVersion = version;
+    }
+
+    @IntDef(value = {
+        LOG_NONE,
+        LOG_I,
+        LOG_W,
+        LOG_E,
+        LOG_D
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface LogLevel {
     }
     // ---------- END！----------
 

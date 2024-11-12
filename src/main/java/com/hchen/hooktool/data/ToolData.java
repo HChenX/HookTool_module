@@ -35,6 +35,8 @@ public class ToolData {
     public static String modulePackageName = null;
     public static String mPrefsName = null;
     public static String[] logExpandPath = null;
+    public static String mLogFileRootName = "";
+    public static String mModuleVersion = "Unknown";
     public static boolean autoReload = true;
     public static boolean isXposed = false;
     public static ClassLoader classLoader = null;

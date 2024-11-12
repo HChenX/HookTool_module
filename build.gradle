@@ -38,6 +38,27 @@ android {
     buildFeatures {
         buildConfig false
     }
+
+    tasks.register("deleteXposedLogClass") {
+        doLast {
+            def buildDir = "${project.buildDir}/intermediates/javac/"
+            def classFiles = fileTree(dir: buildDir, includes: ['**/XposedLog.class'])
+
+            classFiles.each { file ->
+                if (file.exists()) {
+                    file.delete()
+                    println("Deleted ${file}")
+                }
+            }
+        }
+    }
+
+    tasks.configureEach { task ->
+        def name = task.name
+        if (name.contains("JavaWithJavac") && !name.contains("Test")) {
+            task.finalizedBy(deleteXposedLogClass)
+        }
+    }
 }
 
 dependencies {
