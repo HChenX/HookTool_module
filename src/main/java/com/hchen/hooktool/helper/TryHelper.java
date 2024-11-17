@@ -36,11 +36,11 @@ public class TryHelper {
     public static <T> Result<T> run(Run<T> supplier) {
         return new Result<>(supplier);
     }
-    
+
     /*
      * 执行并储存执行的结果与抛错。
      * */
-    public static <T> MemberData<T> runDump(Run<T> supplier) {
+    public static <T> MemberData<T> createMemberData(Run<T> supplier) {
         return (MemberData<T>) new Result<>(supplier, true).dump();
     }
 
@@ -53,7 +53,7 @@ public class TryHelper {
 
     public static class Result<T> {
         private T result;
-        private boolean dump;
+        private boolean createMemberData;
         private MemberData<T> memberData;
         private boolean isSuccess;
         private Throwable throwable;
@@ -62,8 +62,8 @@ public class TryHelper {
             doRun(supplier);
         }
 
-        public Result(Run<T> supplier, boolean dump) {
-            this.dump = dump;
+        public Result(Run<T> supplier, boolean createMemberData) {
+            this.createMemberData = createMemberData;
             doRun(supplier);
         }
 
@@ -77,7 +77,7 @@ public class TryHelper {
                 isSuccess = false;
                 result = null;
             }
-            if (dump)
+            if (createMemberData)
                 memberData = new MemberData<>(result, throwable);
         }
 

@@ -28,8 +28,8 @@ import static com.hchen.hooktool.log.XposedLog.logW;
 import static com.hchen.hooktool.tool.CoreBase.baseCallStaticMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseFilterConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFilterMethod;
-import static com.hchen.hooktool.tool.CoreBase.baseFindAllConstructor;
-import static com.hchen.hooktool.tool.CoreBase.baseFindAllMethod;
+import static com.hchen.hooktool.tool.CoreBase.baseFindAnyConstructor;
+import static com.hchen.hooktool.tool.CoreBase.baseFindAnyMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseFindClass;
 import static com.hchen.hooktool.tool.CoreBase.baseFindConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFindField;
@@ -136,16 +136,16 @@ public class CoreTool {
         return baseFindMethod(new MemberData<>(clazz, null), name, classes);
     }
 
-    public static ArrayList<Method> findAllMethod(String clazz, String name) {
-        return baseFindAllMethod(findClass(clazz), name);
+    public static MemberListData<Method> findAnyMethod(String clazz, String name) {
+        return baseFindAnyMethod(findClass(clazz), name);
     }
 
-    public static ArrayList<Method> findAllMethod(String clazz, ClassLoader classLoader, String name) {
-        return baseFindAllMethod(findClass(clazz, classLoader), name);
+    public static MemberListData<Method> findAnyMethod(String clazz, ClassLoader classLoader, String name) {
+        return baseFindAnyMethod(findClass(clazz, classLoader), name);
     }
 
-    public static ArrayList<Method> findAllMethod(Class<?> clazz, String name) {
-        return baseFindAllMethod(new MemberData<>(clazz, null), name);
+    public static MemberListData<Method> findAnyMethod(Class<?> clazz, String name) {
+        return baseFindAnyMethod(new MemberData<>(clazz, null), name);
     }
 
     //------------ 检查指定构造函数是否存在 --------------
@@ -183,16 +183,16 @@ public class CoreTool {
         return baseFindConstructor(new MemberData<>(clazz, null), classes);
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(String clazz) {
-        return baseFindAllConstructor(findClass(clazz));
+    public static MemberListData<Constructor<?>> findAnyConstructor(String clazz) {
+        return baseFindAnyConstructor(findClass(clazz));
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(String clazz, ClassLoader classLoader) {
-        return baseFindAllConstructor(findClass(clazz, classLoader));
+    public static MemberListData<Constructor<?>> findAnyConstructor(String clazz, ClassLoader classLoader) {
+        return baseFindAnyConstructor(findClass(clazz, classLoader));
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(Class<?> clazz) {
-        return baseFindAllConstructor(new MemberData<>(clazz, null));
+    public static MemberListData<Constructor<?>> findAnyConstructor(Class<?> clazz) {
+        return baseFindAnyConstructor(new MemberData<>(clazz, null));
     }
 
     //------------ 检查指定字段是否存在 --------------
@@ -241,15 +241,15 @@ public class CoreTool {
     }
 
     public static UnHookList hookAllMethod(String clazz, String method, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllMethod(clazz, method), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyMethod(clazz, method).getList(), iHook);
     }
 
     public static UnHookList hookAllMethod(String clazz, ClassLoader classLoader, String method, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllMethod(clazz, classLoader, method), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyMethod(clazz, classLoader, method).getList(), iHook);
     }
 
     public static UnHookList hookAllMethod(Class<?> clazz, String method, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllMethod(clazz, method), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyMethod(clazz, method).getList(), iHook);
     }
 
     // --------- 构造函数 ------------
@@ -266,15 +266,15 @@ public class CoreTool {
     }
 
     public static UnHookList hookAllConstructor(String clazz, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllConstructor(clazz), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyConstructor(clazz).getList(), iHook);
     }
 
     public static UnHookList hookAllConstructor(String clazz, ClassLoader classLoader, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllConstructor(clazz, classLoader), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyConstructor(clazz, classLoader).getList(), iHook);
     }
 
     public static UnHookList hookAllConstructor(Class<?> clazz, IHook iHook) {
-        return hookAll((ArrayList<Member>) (ArrayList<?>) findAllConstructor(clazz), iHook);
+        return hookAll((ArrayList<Member>) (ArrayList<?>) findAnyConstructor(clazz).getList(), iHook);
     }
 
     // ----------- 核心实现 ---------------

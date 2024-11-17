@@ -29,6 +29,8 @@ import static com.hchen.hooktool.log.LogExpand.getTag;
 import static com.hchen.hooktool.log.XposedLog.logD;
 import static com.hchen.hooktool.log.XposedLog.logE;
 import static com.hchen.hooktool.log.XposedLog.logW;
+import static com.hchen.hooktool.tool.CoreTool.existsConstructor;
+import static com.hchen.hooktool.tool.CoreTool.existsMethod;
 import static com.hchen.hooktool.tool.CoreTool.findClass;
 import static com.hchen.hooktool.tool.CoreTool.findConstructor;
 import static com.hchen.hooktool.tool.CoreTool.findMethod;
@@ -92,6 +94,12 @@ public class ChainTool {
         return chainHook;
     }
 
+    public ChainHook methodIfExist(String name, Object... params) {
+        cacheData = new ChainData(name, params);
+        cacheData.checkExist(true);
+        return chainHook;
+    }
+
     public ChainHook anyMethod(String name) {
         cacheData = new ChainData(name);
         return chainHook;
@@ -102,6 +110,12 @@ public class ChainTool {
      */
     public ChainHook constructor(Object... params) {
         cacheData = new ChainData(params);
+        return chainHook;
+    }
+
+    public ChainHook constructorIfExist(Object... params) {
+        cacheData = new ChainData(params);
+        cacheData.checkExist(true);
         return chainHook;
     }
 
@@ -127,20 +141,36 @@ public class ChainTool {
         for (ChainData cacheData : cacheDataList) {
             String UUID = cacheData.mType + "#" + clazz.getName() + "#" + cacheData.mName + "#" + Arrays.toString(cacheData.mParams);
             switch (cacheData.mType) {
-                case TYPE_METHOD -> members.add(new ChainData(
-                    findMethod(clazz, cacheData.mName, arrayToClass(
-                        classLoader == null ? ToolData.classLoader : classLoader,
-                        cacheData.mParams)).get()));
-                case TYPE_CONSTRUCTOR -> members.add(new ChainData(
-                    findConstructor(clazz, arrayToClass(
-                        classLoader == null ? ToolData.classLoader : classLoader,
-                        cacheData.mParams)).get()));
-                case TYPE_ANY_METHOD ->
-                    members.addAll(CoreTool.findAllMethod(clazz, cacheData.mName).stream().map(
+                case TYPE_METHOD -> {
+                    if (cacheData.mCheckExist) {
+                        if (!existsMethod(clazz, cacheData.mName, arrayToClass(
+                            classLoader == null ? ToolData.classLoader : classLoader, cacheData.mParams
+                        ))) continue;
+                    }
+                    members.add(new ChainData(
+                        findMethod(clazz, cacheData.mName, arrayToClass(
+                            classLoader == null ? ToolData.classLoader : classLoader,
+                            cacheData.mParams)).get()));
+                }
+                case TYPE_CONSTRUCTOR -> {
+                    if (cacheData.mCheckExist) {
+                        if (!existsConstructor(clazz, arrayToClass(
+                            classLoader == null ? ToolData.classLoader : classLoader, cacheData.mParams
+                        ))) continue;
+                    }
+                    members.add(new ChainData(
+                        findConstructor(clazz, arrayToClass(
+                            classLoader == null ? ToolData.classLoader : classLoader,
+                            cacheData.mParams)).get()));
+                }
+                case TYPE_ANY_METHOD -> {
+                    members.addAll(CoreTool.findAnyMethod(clazz, cacheData.mName).stream().map(
                         ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
-                case TYPE_ANY_CONSTRUCTOR ->
-                    members.addAll(CoreTool.findAllConstructor(clazz).stream().map(
+                }
+                case TYPE_ANY_CONSTRUCTOR -> {
+                    members.addAll(CoreTool.findAnyConstructor(clazz).stream().map(
                         ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
+                }
                 default -> {
                     logW(getTag(), "Unknown type: " + cacheData.mType + getStackTrace());
                     members.clear();

@@ -58,12 +58,17 @@ public class ChainData {
     public String mName; /* 方法名 */
     public String mType; /* 类型 */
     public Object[] mParams; /* 参数 */
+    public boolean mCheckExist;
 
     // 方法信息
     public ChainData(String name, Object... params) {
         mName = name;
         mType = TYPE_METHOD;
         mParams = params;
+    }
+
+    public void checkExist(boolean check) {
+        mCheckExist = check;
     }
 
     // 方法信息

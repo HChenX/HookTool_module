@@ -104,12 +104,20 @@ public abstract class BaseHC extends CoreTool {
         return chainTool.method(name, params);
     }
 
+    final public ChainTool.ChainHook methodIfExist(String name, Object... params) {
+        return chainTool.methodIfExist(name, params);
+    }
+
     final public ChainTool.ChainHook anyMethod(String name) {
         return chainTool.anyMethod(name);
     }
 
     final public ChainTool.ChainHook constructor(Object... params) {
         return chainTool.constructor(params);
+    }
+
+    final public ChainTool.ChainHook constructorIfExist(Object... params) {
+        return chainTool.constructorIfExist(params);
     }
 
     final public ChainTool.ChainHook anyConstructor() {
