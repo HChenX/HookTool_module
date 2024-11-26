@@ -28,7 +28,7 @@ import java.util.ArrayList;
  *
  * @author 焕晨HChen
  */
-public class ChainData {
+public final class ChainData {
     public ArrayList<ChainData> members = new ArrayList<>(); /* 目标成员组 */
     public Member member; /* 查找到的成员 */
     public IHook iHook; /* hook 动作 */
@@ -58,7 +58,8 @@ public class ChainData {
     public String mName; /* 方法名 */
     public String mType; /* 类型 */
     public Object[] mParams; /* 参数 */
-    public boolean mCheckExist;
+
+    public boolean mCheckExist = false;
 
     // 方法信息
     public ChainData(String name, Object... params) {
@@ -67,7 +68,7 @@ public class ChainData {
         mParams = params;
     }
 
-    public void checkExist(boolean check) {
+    public void setCheckExist(boolean check) {
         mCheckExist = check;
     }
 

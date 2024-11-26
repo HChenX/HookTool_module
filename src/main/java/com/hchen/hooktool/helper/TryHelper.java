@@ -28,8 +28,7 @@ import com.hchen.hooktool.tool.MemberData;
  *
  * @author 焕晨HChen
  */
-public class TryHelper {
-
+public final class TryHelper {
     /*
      * 执行并返回执行的结果或抛错。
      * */
@@ -40,8 +39,8 @@ public class TryHelper {
     /*
      * 执行并储存执行的结果与抛错。
      * */
-    public static <T> MemberData<T> createMemberData(Run<T> supplier) {
-        return (MemberData<T>) new Result<>(supplier, true).dump();
+    public static <T> MemberData<T> createData(Run<T> supplier) {
+        return new Result<>(supplier, true).create();
     }
 
     /*
@@ -52,60 +51,60 @@ public class TryHelper {
     }
 
     public static class Result<T> {
-        private T result;
-        private boolean createMemberData;
-        private MemberData<T> memberData;
+        private T mResult;
         private boolean isSuccess;
-        private Throwable throwable;
+        private Throwable mThrowable;
+        private final boolean shouldCreateData;
+        private MemberData<T> mMemberData;
 
         public Result(Run<T> supplier) {
-            doRun(supplier);
+            this(supplier, false);
         }
 
-        public Result(Run<T> supplier, boolean createMemberData) {
-            this.createMemberData = createMemberData;
+        public Result(Run<T> supplier, boolean shouldCreateData) {
+            this.shouldCreateData = shouldCreateData;
             doRun(supplier);
         }
 
         private void doRun(Run<T> supplier) {
             try {
-                result = supplier.run();
+                mResult = supplier.run();
                 isSuccess = true;
-                throwable = null;
+                mThrowable = null;
             } catch (Throwable throwable) {
-                this.throwable = throwable;
+                mThrowable = throwable;
                 isSuccess = false;
-                result = null;
+                mResult = null;
             }
-            if (createMemberData)
-                memberData = new MemberData<>(result, throwable);
+            if (shouldCreateData)
+                mMemberData = new MemberData<>(mResult, mThrowable);
         }
 
-        public MemberData<?> dump() {
-            return memberData;
+        private MemberData<T> create() {
+            return mMemberData;
         }
 
         // 获取执行结果
         public T get() {
-            return result;
+            return mResult;
         }
 
         // 失败返回 or 值
         public T or(T or) {
-            if (isSuccess) return result;
+            if (isSuccess) return mResult;
             return or;
         }
 
         // 如果失败返回指定 or 值，并执行异常回调
         public T orErr(T or, Err err) {
-            if (isSuccess) return result;
-            err.err(throwable);
+            if (isSuccess) return mResult;
+            err.err(mThrowable);
             return or;
         }
 
         public T orErrMag(T or, String msg) {
-            if (isSuccess) return result;
-            logE(getTag(), msg, throwable);
+            if (isSuccess) return mResult;
+            logE(getTag(), msg, mThrowable);
             return or;
         }
 

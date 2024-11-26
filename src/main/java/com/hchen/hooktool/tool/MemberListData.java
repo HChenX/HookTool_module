@@ -26,30 +26,31 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * 储存获取到的成员列表。
  *
  * @author 焕晨HChen
  */
-public class MemberListData<T> {
-    private final ArrayList<T> mMemberList;
+public final class MemberListData<T> extends ArrayList<T> {
+    public MemberListData(int initialCapacity) {
+        super(initialCapacity);
+    }
 
     public MemberListData() {
-        mMemberList = new ArrayList<>();
+        super();
     }
 
-    public MemberListData(ArrayList<T> memberList) {
-        mMemberList = memberList;
+    public MemberListData(@NonNull Collection<? extends T> c) {
+        super(c);
     }
 
+    @Override
     @Nullable
     public T get(int index) {
         try {
-            return mMemberList.get(index);
-        } catch (Throwable e) {
+            return super.get(index);
+        } catch (IndexOutOfBoundsException e) {
             logE(getTag(), e);
             return null;
         }
@@ -60,58 +61,8 @@ public class MemberListData<T> {
         return get(0);
     }
 
-    @NonNull
-    public T firstOr(@NonNull T or) {
-        T result = get(0);
-        if (result == null)
-            return or;
-        return result;
-    }
-
-    public int size() {
-        return mMemberList.size();
-    }
-
-    public void forEach(Consumer<? super T> action) {
-        mMemberList.forEach(action);
-    }
-
-
-    public boolean contains(T o) {
-        return mMemberList.contains(o);
-    }
-
-    public boolean containsAll(Collection<T> c) {
-        return mMemberList.containsAll(c);
-    }
-
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        return mMemberList.equals(obj);
-    }
-
-    @Override
-    public int hashCode() {
-        return mMemberList.hashCode();
-    }
-
-    public boolean isEmpty() {
-        return mMemberList.isEmpty();
-    }
-
-    public int indexOf(T o) {
-        return mMemberList.indexOf(o);
-    }
-
-    public int lastIndexOf(T o) {
-        return mMemberList.lastIndexOf(o);
-    }
-
-    protected Stream<T> stream() {
-        return mMemberList.stream();
-    }
-
-    protected ArrayList<T> getList() {
-        return mMemberList;
+    @Nullable
+    public T last() {
+        return get(size() - 1);
     }
 }

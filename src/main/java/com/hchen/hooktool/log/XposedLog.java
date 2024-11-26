@@ -27,7 +27,7 @@ import de.robv.android.xposed.XposedBridge;
  *
  * @author 焕晨HChen
  */
-public class XposedLog {
+public final class XposedLog {
     // -------- logE -------------
     public static void logE(String tag, String log) {
         if (ToolData.mInitLogLevel < 1) return;

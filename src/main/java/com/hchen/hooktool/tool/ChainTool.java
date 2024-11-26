@@ -22,7 +22,6 @@ import static com.hchen.hooktool.data.ChainData.TYPE_ANY_CONSTRUCTOR;
 import static com.hchen.hooktool.data.ChainData.TYPE_ANY_METHOD;
 import static com.hchen.hooktool.data.ChainData.TYPE_CONSTRUCTOR;
 import static com.hchen.hooktool.data.ChainData.TYPE_METHOD;
-import static com.hchen.hooktool.helper.ConvertHelper.arrayToClass;
 import static com.hchen.hooktool.hook.HookFactory.createHook;
 import static com.hchen.hooktool.log.LogExpand.getStackTrace;
 import static com.hchen.hooktool.log.LogExpand.getTag;
@@ -37,7 +36,6 @@ import static com.hchen.hooktool.tool.CoreTool.findMethod;
 
 import com.hchen.hooktool.data.ChainData;
 import com.hchen.hooktool.data.HookState;
-import com.hchen.hooktool.data.ToolData;
 import com.hchen.hooktool.hook.IHook;
 
 import java.lang.reflect.Member;
@@ -55,10 +53,9 @@ import de.robv.android.xposed.XposedBridge;
  *
  * @author 焕晨HChen
  */
-public class ChainTool {
+public final class ChainTool {
     private final ChainHook chainHook; // 创建 hook
     private ChainData cacheData;
-    private ClassLoader classLoader = null;
     private final ArrayList<ChainData> chainDataList = new ArrayList<>(); // 链式数据
     private final ArrayList<ChainData> cacheDataList = new ArrayList<>(); // 暂时的缓存数据
     private final HashSet<Member> existingMembers = new HashSet<>();
@@ -69,12 +66,10 @@ public class ChainTool {
     }
 
     public static void chain(String clazz, ChainTool chain) {
-        chain.classLoader = null;
         chain.doFind(findClass(clazz).get());
     }
 
     public static void chain(String clazz, ClassLoader classLoader, ChainTool chain) {
-        chain.classLoader = classLoader;
         chain.doFind(findClass(clazz, classLoader).get());
     }
 
@@ -96,7 +91,7 @@ public class ChainTool {
 
     public ChainHook methodIfExist(String name, Object... params) {
         cacheData = new ChainData(name, params);
-        cacheData.checkExist(true);
+        cacheData.setCheckExist(true);
         return chainHook;
     }
 
@@ -115,7 +110,7 @@ public class ChainTool {
 
     public ChainHook constructorIfExist(Object... params) {
         cacheData = new ChainData(params);
-        cacheData.checkExist(true);
+        cacheData.setCheckExist(true);
         return chainHook;
     }
 
@@ -142,35 +137,21 @@ public class ChainTool {
             String UUID = cacheData.mType + "#" + clazz.getName() + "#" + cacheData.mName + "#" + Arrays.toString(cacheData.mParams);
             switch (cacheData.mType) {
                 case TYPE_METHOD -> {
-                    if (cacheData.mCheckExist) {
-                        if (!existsMethod(clazz, cacheData.mName, arrayToClass(
-                            classLoader == null ? ToolData.classLoader : classLoader, cacheData.mParams
-                        ))) continue;
-                    }
-                    members.add(new ChainData(
-                        findMethod(clazz, cacheData.mName, arrayToClass(
-                            classLoader == null ? ToolData.classLoader : classLoader,
-                            cacheData.mParams)).get()));
+                    if (cacheData.mCheckExist)
+                        if (!existsMethod(clazz, cacheData.mName, cacheData.mParams)) continue;
+                    members.add(new ChainData(findMethod(clazz, cacheData.mName, cacheData.mParams).get()));
                 }
                 case TYPE_CONSTRUCTOR -> {
-                    if (cacheData.mCheckExist) {
-                        if (!existsConstructor(clazz, arrayToClass(
-                            classLoader == null ? ToolData.classLoader : classLoader, cacheData.mParams
-                        ))) continue;
-                    }
-                    members.add(new ChainData(
-                        findConstructor(clazz, arrayToClass(
-                            classLoader == null ? ToolData.classLoader : classLoader,
-                            cacheData.mParams)).get()));
+                    if (cacheData.mCheckExist)
+                        if (!existsConstructor(clazz, cacheData.mParams)) continue;
+                    members.add(new ChainData(findConstructor(clazz, cacheData.mParams).get()));
                 }
-                case TYPE_ANY_METHOD -> {
-                    members.addAll(CoreTool.findAnyMethod(clazz, cacheData.mName).stream().map(
-                        ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
-                }
-                case TYPE_ANY_CONSTRUCTOR -> {
-                    members.addAll(CoreTool.findAnyConstructor(clazz).stream().map(
-                        ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
-                }
+                case TYPE_ANY_METHOD ->
+                        members.addAll(CoreTool.findAllMethod(clazz, cacheData.mName).stream().map(
+                                ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
+                case TYPE_ANY_CONSTRUCTOR ->
+                        members.addAll(CoreTool.findAllConstructor(clazz).stream().map(
+                                ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
                 default -> {
                     logW(getTag(), "Unknown type: " + cacheData.mType + getStackTrace());
                     members.clear();
@@ -185,7 +166,7 @@ public class ChainTool {
                     if (memberData.member == null || existingMembers.contains(memberData.member)) {
                         iterator.remove();
                         logW(getTag(), "This member maybe repeated or maybe is null, will remove it! " +
-                            "\ndebug: " + UUID + "#member: " + memberData.member);
+                                "\ndebug: " + UUID + "#member: " + memberData.member);
                         continue;
                     }
                     existingMembers.add(memberData.member);

@@ -39,45 +39,14 @@ import java.util.concurrent.Executors;
  * @author 焕晨HChen
  */
 @SuppressLint({"PrivateApi", "SoonBlockedPrivateApi", "DiscouragedPrivateApi"})
-public class ContextTool {
-    /**
-     * 异步获取当前应用的 Context，为了防止过早获取导致的 null。
-     * 使用方法:
-     * <pre> {@code
-     * handler = new Handler();
-     * ContextTool.getAsyncContext(new IContextGetter() {
-     *   @Override
-     *   public void tryToFindContext(Context context) {
-     *      handler.post(new Runnable() {
-     *        @Override
-     *        public void run() {
-     *          Toast.makeText(context, "found context!", Toast.LENGTH_SHORT).show();
-     *        }
-     *      });
-     *   }
-     * }, true/false);
-     * }
-     * 当然 Handler 是可选项, 适用于 Toast 显示等场景。
-     * @param iContextGetter 回调获取 Context
-     * @author 焕晨HChen
-     */
-    public static void getAsyncContext(IContextGetter iContextGetter, @Duration int flag) {
-        Executors.newSingleThreadExecutor().submit(() -> {
-            Context context = getContextNoLog(flag);
-            if (context == null) {
-                long time = System.currentTimeMillis();
-                long timeout = 10000; // 10秒
-                while (true) {
-                    long nowTime = System.currentTimeMillis();
-                    context = getContextNoLog(flag);
-                    if (context != null || nowTime - time > timeout) {
-                        break;
-                    }
-                }
-            }
-            // context 可能为 null 请注意判断
-            iContextGetter.tryToFindContext(context);
-        });
+public final class ContextTool {
+    @IntDef(value = {
+            FLAG_ALL,
+            FLAG_CURRENT_APP,
+            FlAG_ONLY_ANDROID
+    })
+    @Retention(RetentionPolicy.SOURCE)
+    private @interface Duration {
     }
 
     // 尝试全部
@@ -104,13 +73,43 @@ public class ContextTool {
         }
     }
 
-    @IntDef(value = {
-        FLAG_ALL,
-        FLAG_CURRENT_APP,
-        FlAG_ONLY_ANDROID
-    })
-    @Retention(RetentionPolicy.SOURCE)
-    private @interface Duration {
+    /**
+     * 异步获取当前应用的 Context，为了防止过早获取导致的 null。
+     * 使用方法:
+     * <pre> {@code
+     * handler = new Handler();
+     * ContextTool.getAsyncContext(new IContextGetter() {
+     *   @Override
+     *   public void tryToFindContext(@Nullable Context context) {
+     *      handler.post(new Runnable() {
+     *        @Override
+     *        public void run() {
+     *          Toast.makeText(context, "found context!", Toast.LENGTH_SHORT).show();
+     *        }
+     *      });
+     *   }
+     * }, FLAG_ALL);
+     * }
+     * 当然 Handler 是可选项, 适用于 Toast 显示等场景。
+     * @param iContextGetter 回调获取 Context
+     * @author 焕晨HChen
+     */
+    public static void getAsyncContext(IContextGetter iContextGetter, @Duration int flag) {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            Context context = getContextNoLog(flag);
+            if (context == null) {
+                long time = System.currentTimeMillis();
+                long timeout = 15000; // 15秒
+                while (true) {
+                    long nowTime = System.currentTimeMillis();
+                    context = getContextNoLog(flag);
+                    if (context != null || nowTime - time > timeout) {
+                        break;
+                    }
+                }
+            }
+            iContextGetter.tryToFindContext(context);
+        });
     }
 
     private static Context invokeMethod(int flag) throws Throwable {
