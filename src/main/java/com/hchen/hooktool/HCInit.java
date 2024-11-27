@@ -48,11 +48,11 @@ public final class HCInit {
     // ------- END --------------
 
     @IntDef(value = {
-            LOG_NONE,
-            LOG_I,
-            LOG_W,
-            LOG_E,
-            LOG_D
+        LOG_NONE,
+        LOG_I,
+        LOG_W,
+        LOG_E,
+        LOG_D
     })
     @Retention(RetentionPolicy.SOURCE)
     private @interface LogLevel {
@@ -76,10 +76,11 @@ public final class HCInit {
         }
         ToolData.isXposed = true;
         ToolData.mLpparam = loadPackageParam;
-        ClassLoader classLoader = loadPackageParam.classLoader;
-        ToolData.mClassLoader = classLoader;
+        ToolData.mClassLoader = loadPackageParam.classLoader;
         String packageName = loadPackageParam.packageName;
-        logI("Init classloader: [" + classLoader + "], pkg: " + packageName);
+        BaseHC.classLoader = loadPackageParam.classLoader;
+        BaseHC.lpparam = loadPackageParam;
+        logI("Init classloader: [" + loadPackageParam.classLoader + "], pkg: " + packageName);
     }
 
     /**
@@ -96,6 +97,7 @@ public final class HCInit {
         ToolData.isXposed = true;
         ToolData.mStartupParam = startupParam;
         ToolData.mClassLoader = startupParam.getClass().getClassLoader();
+        BaseHC.classLoader = startupParam.getClass().getClassLoader();
     }
 
     /**
