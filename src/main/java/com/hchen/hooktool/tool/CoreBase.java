@@ -52,7 +52,7 @@ import de.robv.android.xposed.XposedHelpers;
  * @author 焕晨HChen
  * @noinspection unchecked
  */
-public final class CoreBase {
+final class CoreBase {
     private CoreBase() {
     }
 
@@ -257,7 +257,7 @@ public final class CoreBase {
         Xposed 有此实现，不重复实现。
         // private static final ConcurrentHashMap<String, Method> mMethodMap = new ConcurrentHashMap<>();
         // private static final ConcurrentHashMap<String, Field> mFieldMap = new ConcurrentHashMap<>();
-        
+
         public void writeMethodCache(Method method) {
             if (method == null) return;
             Class<?> c = method.getDeclaringClass();
