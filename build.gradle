@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.library' version '8.5.2' apply true
+    id 'com.android.library'
 }
 
 android {
@@ -11,8 +11,8 @@ android {
         //noinspection OldTargetApi
         targetSdk 34
         // noinspection HighAppVersionCode
-        versionCode 2024112600
-        versionName 'v.1.0.8'
+        versionCode 2024121301
+        versionName 'v.1.1.0'
 
         aarMetadata {
             minCompileSdk = 29

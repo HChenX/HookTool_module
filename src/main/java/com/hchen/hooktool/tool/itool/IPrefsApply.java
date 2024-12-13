@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * prefs 工具接口，方法具体介绍请看实现类 >>
- * {@link PrefsTool}
+ * {@link com.hchen.hooktool.tool.PrefsTool}
  * 
  * @author 焕晨HChen
  */

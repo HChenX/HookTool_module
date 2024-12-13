@@ -23,7 +23,6 @@ import static com.hchen.hooktool.log.XposedLog.logE;
 import android.content.Context;
 import android.content.res.Resources;
 
-import com.hchen.hooktool.data.ToolData;
 import com.hchen.hooktool.tool.ChainTool;
 import com.hchen.hooktool.tool.CoreTool;
 import com.hchen.hooktool.tool.PrefsTool;
@@ -41,27 +40,38 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
  */
 public abstract class BaseHC extends CoreTool {
     public String TAG = getClass().getSimpleName(); // 快捷获取类的简单名称作为 TAG, 为了效果建议配置相应的混淆规则。
-    private final ChainTool mChainTool = new ChainTool();
-    public static XC_LoadPackage.LoadPackageParam lpparam = ToolData.mLpparam;
-    public static ClassLoader classLoader = ToolData.mClassLoader;
+    private static final ChainTool mChainTool = new ChainTool();
+    public static XC_LoadPackage.LoadPackageParam lpparam; // onZygote 状态下为 null。
+    public static ClassLoader classLoader;
 
     /**
-     * 一般阶段。
+     * handleLoadPackage 阶段。
+     * <p>
+     * Tip: 作为覆写使用，请勿直接调用！
      */
-    // 作为覆写使用，请勿直接调用！
     public abstract void init();
 
     /**
-     * zygote 阶段。
+     * 带 classLoader 的初始化。
+     * <p>
+     * Tip: 作为覆写使用，请勿直接调用！
+     */
+    public void init(ClassLoader classLoader) {
+    }
+
+    /**
+     * initZygote 阶段。
      * <p>
      * 如果 startupParam 为 null，请检查是否在正确的地方初始化。
      * <p>
      * 详见: {@link HCInit#initStartupParam(IXposedHookZygoteInit.StartupParam)}
+     * <p>
+     * Tip: 作为覆写使用，请勿直接调用！
      */
-    // 作为覆写使用，请勿直接调用！
     public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) {
     }
 
+    // 请在 handleLoadPackage 阶段调用。
     final public void onLoadPackage() {
         try {
             init();
@@ -70,9 +80,19 @@ public abstract class BaseHC extends CoreTool {
         }
     }
 
+    // 请传入自定义的 classLoader。
+    final public void onClassLoader(ClassLoader classLoader) {
+        try {
+            init(classLoader);
+        } catch (Throwable e) {
+            logE(TAG, "Waring! will stop hook process!!", e);
+        }
+    }
+
+    // 请在 initZygote 阶段调用。
     final public void onZygote() {
         try {
-            initZygote(ToolData.mStartupParam);
+            initZygote(HCData.getStartupParam());
         } catch (Throwable e) {
             logE(TAG, "Waring! will stop hook process!!", e);
         }
@@ -90,27 +110,27 @@ public abstract class BaseHC extends CoreTool {
         ChainTool.chain(clazz, chain);
     }
 
-    final public ChainTool.ChainHook method(String name, Object... params) {
+    public static ChainTool.ChainHook method(String name, Object... params) {
         return mChainTool.method(name, params);
     }
 
-    final public ChainTool.ChainHook methodIfExist(String name, Object... params) {
+    public static ChainTool.ChainHook methodIfExist(String name, Object... params) {
         return mChainTool.methodIfExist(name, params);
     }
 
-    final public ChainTool.ChainHook anyMethod(String name) {
+    public static ChainTool.ChainHook anyMethod(String name) {
         return mChainTool.anyMethod(name);
     }
 
-    final public ChainTool.ChainHook constructor(Object... params) {
+    public static ChainTool.ChainHook constructor(Object... params) {
         return mChainTool.constructor(params);
     }
 
-    final public ChainTool.ChainHook constructorIfExist(Object... params) {
+    public static ChainTool.ChainHook constructorIfExist(Object... params) {
         return mChainTool.constructorIfExist(params);
     }
 
-    final public ChainTool.ChainHook anyConstructor() {
+    public static ChainTool.ChainHook anyConstructor() {
         return mChainTool.anyConstructor();
     }
 
