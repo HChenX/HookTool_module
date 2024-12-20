@@ -333,7 +333,7 @@ public final class PrefsTool {
         }
 
         @Override
-        public PrefsTool.Editor editor() {
+        public Editor editor() {
             return new Editor(preferences.edit());
         }
     }

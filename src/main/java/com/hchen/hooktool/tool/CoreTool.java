@@ -21,6 +21,7 @@ package com.hchen.hooktool.tool;
 import static com.hchen.hooktool.helper.TryHelper.run;
 import static com.hchen.hooktool.log.LogExpand.getTag;
 import static com.hchen.hooktool.log.XposedLog.logI;
+import static com.hchen.hooktool.tool.CoreBase.baseCallMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseCallStaticMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseFilterConstructor;
 import static com.hchen.hooktool.tool.CoreBase.baseFilterMethod;
@@ -32,12 +33,14 @@ import static com.hchen.hooktool.tool.CoreBase.baseFindField;
 import static com.hchen.hooktool.tool.CoreBase.baseFindMethod;
 import static com.hchen.hooktool.tool.CoreBase.baseFirstUnhook;
 import static com.hchen.hooktool.tool.CoreBase.baseGetAdditionalStaticField;
+import static com.hchen.hooktool.tool.CoreBase.baseGetField;
 import static com.hchen.hooktool.tool.CoreBase.baseGetStaticField;
 import static com.hchen.hooktool.tool.CoreBase.baseHook;
 import static com.hchen.hooktool.tool.CoreBase.baseHookAll;
 import static com.hchen.hooktool.tool.CoreBase.baseNewInstance;
 import static com.hchen.hooktool.tool.CoreBase.baseRemoveAdditionalStaticField;
 import static com.hchen.hooktool.tool.CoreBase.baseSetAdditionalStaticField;
+import static com.hchen.hooktool.tool.CoreBase.baseSetField;
 import static com.hchen.hooktool.tool.CoreBase.baseSetStaticField;
 
 import com.hchen.hooktool.HCData;
@@ -51,8 +54,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -125,15 +128,15 @@ public class CoreTool {
         return baseFindMethod(new SingleMember<>(clazz, null), name, objs);
     }
 
-    public static ArrayList<Method> findAllMethod(String clazz, String name) {
+    public static List<Method> findAllMethod(String clazz, String name) {
         return baseFindAllMethod(findClass(clazz), name);
     }
 
-    public static ArrayList<Method> findAllMethod(String clazz, ClassLoader classLoader, String name) {
+    public static List<Method> findAllMethod(String clazz, ClassLoader classLoader, String name) {
         return baseFindAllMethod(findClass(clazz, classLoader), name);
     }
 
-    public static ArrayList<Method> findAllMethod(Class<?> clazz, String name) {
+    public static List<Method> findAllMethod(Class<?> clazz, String name) {
         return baseFindAllMethod(new SingleMember<>(clazz, null), name);
     }
 
@@ -164,15 +167,15 @@ public class CoreTool {
         return baseFindConstructor(new SingleMember<>(clazz, null), objs);
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(String clazz) {
+    public static List<Constructor<?>> findAllConstructor(String clazz) {
         return baseFindAllConstructor(findClass(clazz));
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(String clazz, ClassLoader classLoader) {
+    public static List<Constructor<?>> findAllConstructor(String clazz, ClassLoader classLoader) {
         return baseFindAllConstructor(findClass(clazz, classLoader));
     }
 
-    public static ArrayList<Constructor<?>> findAllConstructor(Class<?> clazz) {
+    public static List<Constructor<?>> findAllConstructor(Class<?> clazz) {
         return baseFindAllConstructor(new SingleMember<>(clazz, null));
     }
 
@@ -217,16 +220,16 @@ public class CoreTool {
         return baseHook(new SingleMember<>(clazz, null), method, params);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllMethod(String clazz, String method, IHook iHook) {
-        return hookAll(findAllMethod(clazz, method), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllMethod(String clazz, String method, IHook iHook) {
+        return baseHookAll(findAllMethod(clazz, method), iHook);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllMethod(String clazz, ClassLoader classLoader, String method, IHook iHook) {
-        return hookAll(findAllMethod(clazz, classLoader, method), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllMethod(String clazz, ClassLoader classLoader, String method, IHook iHook) {
+        return baseHookAll(findAllMethod(clazz, classLoader, method), iHook);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllMethod(Class<?> clazz, String method, IHook iHook) {
-        return hookAll(findAllMethod(clazz, method), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllMethod(Class<?> clazz, String method, IHook iHook) {
+        return baseHookAll(findAllMethod(clazz, method), iHook);
     }
 
     // --------- 构造函数 ------------
@@ -242,24 +245,24 @@ public class CoreTool {
         return baseHook(new SingleMember<>(clazz, null), null, params);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllConstructor(String clazz, IHook iHook) {
-        return hookAll(findAllConstructor(clazz), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllConstructor(String clazz, IHook iHook) {
+        return baseHookAll(findAllConstructor(clazz), iHook);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllConstructor(String clazz, ClassLoader classLoader, IHook iHook) {
-        return hookAll(findAllConstructor(clazz, classLoader), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllConstructor(String clazz, ClassLoader classLoader, IHook iHook) {
+        return baseHookAll(findAllConstructor(clazz, classLoader), iHook);
     }
 
-    public static ArrayList<XC_MethodHook.Unhook> hookAllConstructor(Class<?> clazz, IHook iHook) {
-        return hookAll(findAllConstructor(clazz), iHook);
+    public static List<XC_MethodHook.Unhook> hookAllConstructor(Class<?> clazz, IHook iHook) {
+        return baseHookAll(findAllConstructor(clazz), iHook);
     }
 
     public static XC_MethodHook.Unhook hook(Member member, IHook iHook) {
         return baseFirstUnhook(baseHookAll(new Member[]{member}, iHook));
     }
 
-    public static <T extends Member> ArrayList<XC_MethodHook.Unhook> hookAll(ArrayList<T> members, IHook iHook) {
-        return baseHookAll(members.toArray(new Member[0]), iHook);
+    public static <T extends Member> List<XC_MethodHook.Unhook> hookAll(T[] members, IHook iHook) {
+        return baseHookAll(members, iHook);
     }
 
     // --------- 快捷方法 -----------
@@ -287,27 +290,27 @@ public class CoreTool {
     }
 
     // --------- 过滤方法 -----------
-    public static ArrayList<Method> filterMethod(String clazz, IMemberFilter<Method> iMemberFilter) {
+    public static List<Method> filterMethod(String clazz, IMemberFilter<Method> iMemberFilter) {
         return baseFilterMethod(findClass(clazz), iMemberFilter);
     }
 
-    public static ArrayList<Method> filterMethod(String clazz, ClassLoader classLoader, IMemberFilter<Method> iMemberFilter) {
+    public static List<Method> filterMethod(String clazz, ClassLoader classLoader, IMemberFilter<Method> iMemberFilter) {
         return baseFilterMethod(findClass(clazz, classLoader), iMemberFilter);
     }
 
-    public static ArrayList<Method> filterMethod(Class<?> clazz, IMemberFilter<Method> iMemberFilter) {
+    public static List<Method> filterMethod(Class<?> clazz, IMemberFilter<Method> iMemberFilter) {
         return baseFilterMethod(new SingleMember<>(clazz, null), iMemberFilter);
     }
 
-    public static ArrayList<Constructor<?>> filterConstructor(String clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
+    public static List<Constructor<?>> filterConstructor(String clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
         return baseFilterConstructor(findClass(clazz), iMemberFilter);
     }
 
-    public static ArrayList<Constructor<?>> filterConstructor(String clazz, ClassLoader classLoader, IMemberFilter<Constructor<?>> iMemberFilter) {
+    public static List<Constructor<?>> filterConstructor(String clazz, ClassLoader classLoader, IMemberFilter<Constructor<?>> iMemberFilter) {
         return baseFilterConstructor(findClass(clazz, classLoader), iMemberFilter);
     }
 
-    public static ArrayList<Constructor<?>> filterConstructor(Class<?> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
+    public static List<Constructor<?>> filterConstructor(Class<?> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
         return baseFilterConstructor(new SingleMember<>(clazz, null), iMemberFilter);
     }
 
@@ -334,35 +337,27 @@ public class CoreTool {
 
     // ---------- 非静态 -----------
     public static Object callMethod(Object instance, String name, Object... objs) {
-        return run(() -> XposedHelpers.callMethod(instance, name, objs))
-                .orErrMag(null, "Failed to call method!");
+        return baseCallMethod(instance, name, objs);
+    }
+
+    public static Object callMethod(Object instance, Method method, Object... objs) {
+        return baseCallMethod(instance, method, objs);
     }
 
     public static Object getField(Object instance, String name) {
-        return run(() -> XposedHelpers.getObjectField(instance, name))
-                .orErrMag(null, "Failed to get field!");
+        return baseGetField(instance, name);
     }
 
     public static Object getField(Object instance, Field field) {
-        return run(() -> {
-            field.setAccessible(true);
-            return field.get(instance);
-        }).orErrMag(null, "Failed to get field!");
+        return baseGetField(instance, field);
     }
 
     public static boolean setField(Object instance, String name, Object value) {
-        return run(() -> {
-            XposedHelpers.setObjectField(instance, name, value);
-            return true;
-        }).orErrMag(false, "Failed to set field!");
+        return baseSetField(instance, name, value);
     }
 
     public static boolean setField(Object instance, Field field, Object value) {
-        return run(() -> {
-            field.setAccessible(true);
-            field.set(instance, value);
-            return true;
-        }).orErrMag(false, "Failed to set field!");
+        return baseSetField(instance, field, value);
     }
 
     public static Object setAdditionalInstanceField(Object instance, String key, Object value) {
@@ -394,61 +389,51 @@ public class CoreTool {
     }
 
     public static Object callStaticMethod(Class<?> clz, String name, Object... objs) {
-        return baseCallStaticMethod(new SingleMember<>(clz, null), name, objs);
+        return baseCallStaticMethod(new SingleMember<>(clz, null), null, name, objs);
     }
 
     public static Object callStaticMethod(String clz, String name, Object... objs) {
-        return baseCallStaticMethod(findClass(clz), name, objs);
+        return baseCallStaticMethod(findClass(clz), null, name, objs);
     }
 
     public static Object callStaticMethod(String clz, ClassLoader classLoader, String name, Object... objs) {
-        return baseCallStaticMethod(findClass(clz, classLoader), name, objs);
+        return baseCallStaticMethod(findClass(clz, classLoader), null, name, objs);
     }
 
     public static Object callStaticMethod(Method method, Object... objs) {
-        return run(() -> {
-            method.setAccessible(true);
-            return method.invoke(null, objs);
-        }).orErrMag(null, "Failed to call static method!");
+        return baseCallStaticMethod(null, method, null, objs);
     }
 
     public static Object getStaticField(Class<?> clz, String name) {
-        return baseGetStaticField(new SingleMember<>(clz, null), name);
+        return baseGetStaticField(new SingleMember<>(clz, null), null, name);
     }
 
     public static Object getStaticField(String clz, String name) {
-        return baseGetStaticField(findClass(clz), name);
+        return baseGetStaticField(findClass(clz), null, name);
     }
 
     public static Object getStaticField(String clz, ClassLoader classLoader, String name) {
-        return baseGetStaticField(findClass(clz, classLoader), name);
+        return baseGetStaticField(findClass(clz, classLoader), null, name);
     }
 
     public static Object getStaticField(Field field) {
-        return run(() -> {
-            field.setAccessible(true);
-            return field.get(null);
-        }).orErrMag(null, "Failed to get static field!");
+        return baseGetStaticField(null, field, null);
     }
 
     public static boolean setStaticField(Class<?> clz, String name, Object value) {
-        return baseSetStaticField(new SingleMember<>(clz, null), name, value);
+        return baseSetStaticField(new SingleMember<>(clz, null), null, name, value);
     }
 
     public static boolean setStaticField(String clz, String name, Object value) {
-        return baseSetStaticField(findClass(clz), name, value);
+        return baseSetStaticField(findClass(clz), null, name, value);
     }
 
     public static boolean setStaticField(String clz, ClassLoader classLoader, String name, Object value) {
-        return baseSetStaticField(findClass(clz, classLoader), name, value);
+        return baseSetStaticField(findClass(clz, classLoader), null, name, value);
     }
 
     public static boolean setStaticField(Field field, Object value) {
-        return run(() -> {
-            field.setAccessible(true);
-            field.set(null, value);
-            return true;
-        }).orErrMag(false, "Failed to set static field!");
+        return baseSetStaticField(null, field, null, value);
     }
 
     public static Object setAdditionalStaticField(Class<?> clz, String key, Object value) {
