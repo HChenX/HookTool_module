@@ -25,8 +25,8 @@ import static com.hchen.hooktool.data.ChainData.TYPE_METHOD;
 import static com.hchen.hooktool.hook.HookFactory.createHook;
 import static com.hchen.hooktool.log.LogExpand.getStackTrace;
 import static com.hchen.hooktool.log.LogExpand.getTag;
-import static com.hchen.hooktool.log.XposedLog.logD;
 import static com.hchen.hooktool.log.XposedLog.logE;
+import static com.hchen.hooktool.log.XposedLog.logI;
 import static com.hchen.hooktool.log.XposedLog.logW;
 import static com.hchen.hooktool.tool.CoreTool.existsConstructor;
 import static com.hchen.hooktool.tool.CoreTool.existsMethod;
@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.stream.Collectors;
 
@@ -56,8 +57,8 @@ import de.robv.android.xposed.XposedBridge;
 public final class ChainTool {
     private final ChainHook chainHook; // 创建 hook
     private ChainData cacheData;
-    private final ArrayList<ChainData> chainDataList = new ArrayList<>(); // 链式数据
-    private final ArrayList<ChainData> cacheDataList = new ArrayList<>(); // 暂时的缓存数据
+    private final List<ChainData> chainDataList = new ArrayList<>(); // 链式数据
+    private final List<ChainData> cacheDataList = new ArrayList<>(); // 暂时的缓存数据
     private final HashSet<Member> existingMembers = new HashSet<>();
     private IHook mIHook;
 
@@ -126,13 +127,16 @@ public final class ChainTool {
 
     // 各种奇奇怪怪的添加 >.<
     private void doFind(Class<?> clazz) {
-        if (clazz == null) return;
-        if (cacheDataList.isEmpty()) {
-            logW(getTag(), "cache data list is empty, can't find or hook anything!" + getStackTrace());
+        if (clazz == null) {
             cacheDataList.clear();
             return;
         }
-        ArrayList<ChainData> members = new ArrayList<>();
+        if (cacheDataList.isEmpty()) {
+            logW(getTag(), "cache data list is empty, can't find or hook anything!" + getStackTrace());
+            return;
+        }
+
+        List<ChainData> members = new ArrayList<>();
         for (ChainData cacheData : cacheDataList) {
             String UUID = cacheData.mType + "#" + clazz.getName() + "#" + cacheData.mName + "#" + Arrays.toString(cacheData.mParams);
             switch (cacheData.mType) {
@@ -183,7 +187,7 @@ public final class ChainTool {
 
     // 太复杂啦，我也迷糊了 >.<
     public void doChainHook() {
-        ArrayList<ChainData> chainDataList = this.chainDataList;
+        List<ChainData> chainDataList = this.chainDataList;
 
         ListIterator<ChainData> iterator = chainDataList.listIterator();
         while (iterator.hasNext()) {
@@ -197,7 +201,7 @@ public final class ChainTool {
             for (ChainData memberData : chainData.members) {
                 try {
                     XposedBridge.hookMethod(memberData.member, createHook(getTag(), chainData.iHook));
-                    logD(getTag(), "Success to hook: " + memberData.member);
+                    logI(getTag(), "Success to hook: " + memberData.member);
                 } catch (Throwable e) {
                     logE(getTag(), "Failed to hook: " + memberData.member, e);
                 }

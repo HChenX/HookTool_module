@@ -19,19 +19,20 @@
 package com.hchen.hooktool.tool;
 
 import static com.hchen.hooktool.helper.ConvertHelper.arrayToClass;
-import static com.hchen.hooktool.helper.TryHelper.createData;
+import static com.hchen.hooktool.helper.TryHelper.createSingleMember;
 import static com.hchen.hooktool.helper.TryHelper.run;
 import static com.hchen.hooktool.hook.HookFactory.createHook;
 import static com.hchen.hooktool.log.LogExpand.getStackTrace;
 import static com.hchen.hooktool.log.LogExpand.getTag;
-import static com.hchen.hooktool.log.XposedLog.logD;
 import static com.hchen.hooktool.log.XposedLog.logE;
+import static com.hchen.hooktool.log.XposedLog.logI;
 import static com.hchen.hooktool.log.XposedLog.logW;
 import static com.hchen.hooktool.tool.CoreTool.findConstructor;
 import static com.hchen.hooktool.tool.CoreTool.findMethod;
 
 import androidx.annotation.Nullable;
 
+import com.hchen.hooktool.helper.TryHelper;
 import com.hchen.hooktool.hook.IHook;
 import com.hchen.hooktool.tool.itool.IMemberFilter;
 
@@ -39,10 +40,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
@@ -50,185 +55,270 @@ import de.robv.android.xposed.XposedHelpers;
  * 核心类
  *
  * @author 焕晨HChen
- * @noinspection unchecked
  */
 final class CoreBase {
     private CoreBase() {
     }
 
-    static MemberData<Class<?>> baseFindClass(String name, ClassLoader classLoader) {
-        return (MemberData<Class<?>>) (MemberData<?>) createData(() -> {
-            Class<?> c = CoreMemberCache.readClassCache(name, classLoader);
-            if (c == null) {
-                c = XposedHelpers.findClass(name, classLoader);
-                CoreMemberCache.writeClassCache(c);
+    static SingleMember<Class<?>> baseFindClass(String name, ClassLoader classLoader) {
+        return TryHelper.<Class<?>>createSingleMember(() -> {
+            Class<?> clazz = MemberCache.readClassCache(name, classLoader);
+            if (clazz == null) {
+                clazz = XposedHelpers.findClass(name, classLoader);
+                MemberCache.writeClassCache(clazz);
             }
-            return c;
+            return clazz;
         }).setErrMsg("Failed to find class!");
     }
 
-    static MemberData<Method> baseFindMethod(MemberData<Class<?>> clazz, String name, Object... objs) {
+    static SingleMember<Method> baseFindMethod(SingleMember<Class<?>> clazz, String name, Object... objs) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.findMethodExact(member, name, arrayToClass(member.getClassLoader(), objs)))
-                                .setErrMsg("Failed to find method!"),
-                new MemberData<>(null));
+                createSingleMember(
+                    () -> XposedHelpers.findMethodExact(member, name, arrayToClass(member.getClassLoader(), objs))
+                ).setErrMsg("Failed to find method!"),
+            new SingleMember<>(null));
     }
 
-    static MemberListData<Method> baseFindAllMethod(MemberData<Class<?>> clazz, String name) {
+    static List<Method> baseFindAllMethod(SingleMember<Class<?>> clazz, String name) {
         return clazz.reportOrRun(member ->
-                        createData(() -> Arrays.stream(member.getDeclaredMethods())
-                                .filter(method -> name.equals(method.getName()))
-                                .collect(Collectors.toCollection(MemberListData::new)))
-                                .setErrMsg("Failed to find all method!")
-                                .or(new MemberListData<>()),
-                new MemberListData<>());
+                createSingleMember(
+                    () -> Arrays.stream(member.getDeclaredMethods())
+                        .filter(method -> name.equals(method.getName()))
+                        .collect(Collectors.toCollection(ArrayList::new))
+                ).setErrMsg("Failed to find all method!")
+                    .or(new ArrayList<>()),
+            new ArrayList<>());
     }
 
-    static MemberData<Constructor<?>> baseFindConstructor(MemberData<Class<?>> clazz, Object... objs) {
+    static SingleMember<Constructor<?>> baseFindConstructor(SingleMember<Class<?>> clazz, Object... objs) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.findConstructorExact(member, arrayToClass(member.getClassLoader(), objs)))
-                                .setErrMsg("Failed to find constructor!"),
-                new MemberData<>(null));
+                createSingleMember(
+                    () -> XposedHelpers.findConstructorExact(member, arrayToClass(member.getClassLoader(), objs))
+                ).setErrMsg("Failed to find constructor!"),
+            new SingleMember<>(null));
     }
 
-    static MemberListData<Constructor<?>> baseFindAllConstructor(MemberData<Class<?>> clazz) {
+    static List<Constructor<?>> baseFindAllConstructor(SingleMember<Class<?>> clazz) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                new MemberListData<>(Arrays.asList(member.getDeclaredConstructors())))
-                                .setErrMsg("Failed to find constructor!")
-                                .or(new MemberListData<>()),
-                new MemberListData<>());
+                createSingleMember(
+                    () -> new ArrayList<>(Arrays.asList(member.getDeclaredConstructors()))
+                ).setErrMsg("Failed to find constructor!")
+                    .or(new ArrayList<>()),
+            new ArrayList<>());
     }
 
-    static MemberData<Field> baseFindField(MemberData<Class<?>> clazz, String name) {
+    static SingleMember<Field> baseFindField(SingleMember<Class<?>> clazz, String name) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.findField(member, name))
-                                .setErrMsg("Failed to find field!"),
-                new MemberData<>(null));
+                createSingleMember(
+                    () -> XposedHelpers.findField(member, name)
+                ).setErrMsg("Failed to find field!"),
+            new SingleMember<>(null));
     }
 
-    static CoreTool.UnHook baseHook(MemberData<Class<?>> clazz, String method, Object... params) {
+    static XC_MethodHook.Unhook baseHook(SingleMember<Class<?>> clazz, String method, Object... params) {
         String tag = getTag();
         String debug = (method != null ? "METHOD" : "CONSTRUCTOR") + "#" + (clazz.getNoReport() == null ? "null" : clazz.getNoReport().getName())
                 + "#" + method + "#" + Arrays.toString(params);
         if (params == null || params.length == 0 || !(params[params.length - 1] instanceof IHook iHook)) {
             logW(tag, "Hook params is null or length is 0 or last param not is IAction! \ndebug: " + debug + getStackTrace());
-            return new CoreTool.UnHook(null);
+            return null;
         }
 
         if (clazz.getThrowable() != null) {
             logE(tag, "Failed to hook! \ndebug: " + debug, clazz.getThrowable());
-            return new CoreTool.UnHook(null);
+            return null;
         }
 
-        MemberData<?> member;
+        SingleMember<?> member;
         if (method != null)
             member = findMethod(clazz.getNoReport(), method, params);
         else
             member = findConstructor(clazz.getNoReport(), params);
         if (member.getThrowable() != null) {
             logE(tag, "Failed to hook! \ndebug: " + debug, member.getThrowable());
-            return new CoreTool.UnHook(null);
+            return null;
         }
 
         return run(() -> {
-            CoreTool.UnHook unHook = new CoreTool.UnHook(XposedBridge.hookMethod(((MemberData<Member>) member).getNoReport(), createHook(tag, iHook)));
-            logD(tag, "Success to hook: " + member.getNoReport());
+            XC_MethodHook.Unhook unHook = XposedBridge.hookMethod(((SingleMember<Member>) member).getNoReport(), createHook(tag, iHook));
+            logI(tag, "Success to hook: " + member.getNoReport());
             return unHook;
-        }).orErrMag(new CoreTool.UnHook(null), "Failed to hook! \ndebug: " + debug);
+        }).orErrMag(null, "Failed to hook! \ndebug: " + debug);
     }
 
-    static MemberListData<Method> baseFilterMethod(MemberData<Class<?>> clazz, IMemberFilter<Method> iMemberFilter) {
+    static <T extends Member> List<XC_MethodHook.Unhook> baseHookAll(List<T> members, IHook iHook) {
+        return baseHookAll(members.toArray(new Member[0]), iHook);
+    }
+
+    static List<XC_MethodHook.Unhook> baseHookAll(Member[] members, IHook iHook) {
+        if (members == null) return new ArrayList<>();
+        String tag = getTag();
+
+        return Arrays.stream(members).map(member ->
+                run(() -> {
+                        XC_MethodHook.Unhook unhook = XposedBridge.hookMethod(member, createHook(tag, iHook));
+                        logI(tag, "Success to hook: " + member);
+                        return unhook;
+                    }
+                ).orErrMag(null, "Failed to hook: " + member)
+            )
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    static XC_MethodHook.Unhook baseFirstUnhook(List<XC_MethodHook.Unhook> unhooks) {
+        if (unhooks.isEmpty()) return null;
+        return unhooks.get(0);
+    }
+
+    static List<Method> baseFilterMethod(SingleMember<Class<?>> clazz, IMemberFilter<Method> iMemberFilter) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                Arrays.stream(member.getDeclaredMethods())
+                createSingleMember(
+                    () -> Arrays.stream(member.getDeclaredMethods())
                                         .filter(iMemberFilter::test)
-                                        .collect(Collectors.toCollection(MemberListData::new)))
-                                .setErrMsg("Failed to filter method!")
-                                .or(new MemberListData<>()),
-                new MemberListData<>());
+                        .collect(Collectors.toCollection(ArrayList::new))
+                ).setErrMsg("Failed to filter method!")
+                    .or(new ArrayList<>()),
+            new ArrayList<>());
     }
 
-    static MemberListData<Constructor<?>> baseFilterConstructor(MemberData<Class<?>> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
+    static List<Constructor<?>> baseFilterConstructor(SingleMember<Class<?>> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
         return clazz.reportOrRun(member ->
-                        createData(() ->
-                                Arrays.stream(member.getDeclaredConstructors())
+                createSingleMember(
+                    () -> Arrays.stream(member.getDeclaredConstructors())
                                         .filter(iMemberFilter::test)
-                                        .collect(Collectors.toCollection(MemberListData::new)))
-                                .setErrMsg("Failed to filter constructor!")
-                                .or(new MemberListData<>()),
-                new MemberListData<>());
+                        .collect(Collectors.toCollection(ArrayList::new))
+                ).setErrMsg("Failed to filter constructor!")
+                    .or(new ArrayList<>()),
+            new ArrayList<>());
     }
 
-    static <T> T baseNewInstance(MemberData<Class<?>> clz, Object... objs) {
+    static Object baseCallMethod(Object instance, Object type, Object... objs) {
+        if (type instanceof String name) {
+            return run(() -> XposedHelpers.callMethod(instance, name, objs))
+                .orErrMag(null, "Failed to call method!");
+        } else if (type instanceof Method method) {
+            return run(() -> {
+                method.setAccessible(true);
+                return method.invoke(instance, objs);
+            }).orErrMag(null, "Failed to call method!");
+        }
+        return null;
+    }
+
+    static Object baseGetField(Object instance, Object type) {
+        if (type instanceof String name) {
+            return run(() -> XposedHelpers.getObjectField(instance, name))
+                .orErrMag(null, "Failed to get field!");
+        } else if (type instanceof Field field) {
+            return run(() -> {
+                field.setAccessible(true);
+                return field.get(instance);
+            }).orErrMag(null, "Failed to get field!");
+        }
+        return null;
+    }
+
+    static boolean baseSetField(Object instance, Object type, Object value) {
+        if (type instanceof String name) {
+            return run(() -> {
+                XposedHelpers.setObjectField(instance, name, value);
+                return true;
+            }).orErrMag(false, "Failed to set field!");
+        } else if (type instanceof Field field) {
+            return run(() -> {
+                field.setAccessible(true);
+                field.set(instance, value);
+                return true;
+            }).orErrMag(false, "Failed to set field!");
+        }
+        return false;
+    }
+
+    static Object baseNewInstance(SingleMember<Class<?>> clz, Object... objs) {
         return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.newInstance(member, objs))
-                                .setErrMsg("Failed to create new instance!")
+                createSingleMember(
+                    () -> XposedHelpers.newInstance(member, objs)
+                ).setErrMsg("Failed to create new instance!")
                                 .or(null),
                 null);
     }
 
-    static <T> T baseCallStaticMethod(MemberData<Class<?>> clz, String name, Object... objs) {
-        return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.callStaticMethod(member, name, objs))
-                                .setErrMsg("Failed to call static method!")
-                                .or(null),
+    static Object baseCallStaticMethod(SingleMember<Class<?>> clz, Method method, String name, Object... objs) {
+        if (clz != null)
+            return clz.reportOrRun(member ->
+                    createSingleMember(
+                        () -> XposedHelpers.callStaticMethod(member, name, objs)
+                    ).setErrMsg("Failed to call static method!")
+                        .or(null),
                 null);
+        else
+            return run(() -> {
+                method.setAccessible(true);
+                return method.invoke(null, objs);
+            }).orErrMag(null, "Failed to call static method!");
     }
 
-    static <T> T baseGetStaticField(MemberData<Class<?>> clz, String name) {
-        return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.getStaticObjectField(member, name))
-                                .setErrMsg("Failed to get static field!")
-                                .or(null),
+    static Object baseGetStaticField(SingleMember<Class<?>> clz, Field field, String name) {
+        if (clz != null)
+            return clz.reportOrRun(member ->
+                    createSingleMember(
+                        () -> XposedHelpers.getStaticObjectField(member, name)
+                    ).setErrMsg("Failed to get static field!")
+                        .or(null),
                 null);
+        else
+            return run(() -> {
+                field.setAccessible(true);
+                return field.get(null);
+            }).orErrMag(null, "Failed to get static field!");
     }
 
-    static boolean baseSetStaticField(MemberData<Class<?>> clz, String name, Object value) {
-        return clz.reportOrRun(member ->
-                        createData(() -> {
-                            XposedHelpers.setStaticObjectField(member, name, value);
-                            return true;
-                        })
-                                .setErrMsg("Failed to set static field!")
-                                .or(false),
+    static boolean baseSetStaticField(SingleMember<Class<?>> clz, Field field, String name, Object value) {
+        if (clz != null)
+            return clz.reportOrRun(member ->
+                    createSingleMember(() -> {
+                        XposedHelpers.setStaticObjectField(member, name, value);
+                        return true;
+                    }).setErrMsg("Failed to set static field!")
+                        .or(false),
                 false);
+        else
+            return run(() -> {
+                field.setAccessible(true);
+                field.set(null, value);
+                return true;
+            }).orErrMag(false, "Failed to set static field!");
     }
 
-    static <T> T baseSetAdditionalStaticField(MemberData<Class<?>> clz, String key, Object value) {
+    static Object baseSetAdditionalStaticField(SingleMember<Class<?>> clz, String key, Object value) {
         return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.setAdditionalStaticField(member, key, value))
-                                .setErrMsg("Failed to set static additional instance!")
+                createSingleMember(
+                    () -> XposedHelpers.setAdditionalStaticField(member, key, value)
+                ).setErrMsg("Failed to set static additional instance!")
                                 .or(null),
                 null);
     }
 
-    static <T> T baseGetAdditionalStaticField(MemberData<Class<?>> clz, String key) {
+    static Object baseGetAdditionalStaticField(SingleMember<Class<?>> clz, String key) {
         return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.getAdditionalStaticField(member, key))
-                                .setErrMsg("Failed to get static additional instance!")
+                createSingleMember(
+                    () -> XposedHelpers.getAdditionalStaticField(member, key)
+                ).setErrMsg("Failed to get static additional instance!")
                                 .or(null),
                 null);
     }
 
-    static <T> T baseRemoveAdditionalStaticField(MemberData<Class<?>> clz, String key) {
+    static Object baseRemoveAdditionalStaticField(SingleMember<Class<?>> clz, String key) {
         return clz.reportOrRun(member ->
-                        createData(() ->
-                                XposedHelpers.removeAdditionalStaticField(member, key))
-                                .setErrMsg("Failed to remove static additional instance!")
+                createSingleMember(
+                    () -> XposedHelpers.removeAdditionalStaticField(member, key)
+                ).setErrMsg("Failed to remove static additional instance!")
                                 .or(null),
                 null);
     }
 
-    private final static class CoreMemberCache {
+    private final static class MemberCache {
         private static final HashMap<String, Class<?>> mClassMap = new HashMap<>();
 
         public static void writeClassCache(Class<?> clazz) {
@@ -252,25 +342,5 @@ final class CoreBase {
             }
             return cache;
         }
-
-        /*
-        Xposed 有此实现，不重复实现。
-        // private static final ConcurrentHashMap<String, Method> mMethodMap = new ConcurrentHashMap<>();
-        // private static final ConcurrentHashMap<String, Field> mFieldMap = new ConcurrentHashMap<>();
-
-        public void writeMethodCache(Method method) {
-            if (method == null) return;
-            Class<?> c = method.getDeclaringClass();
-            String paramsId = "(" + Arrays.stream(method.getParameterTypes()).map(Class::getName).collect(Collectors.joining(", ")) + ")";
-            method.setAccessible(true);
-            mMethodMap.put(c.getName() + "#" + method.getName() + paramsId, method);
-        }
-
-        public void writeFieldCache(Field field) {
-            if (field == null) return;
-            field.setAccessible(true);
-            mFieldMap.put(field.getDeclaringClass().getName() + field.getName(), field);
-        }
-        */
     }
 }

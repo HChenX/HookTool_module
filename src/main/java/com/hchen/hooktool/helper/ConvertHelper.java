@@ -24,11 +24,12 @@ import static com.hchen.hooktool.tool.CoreTool.findClass;
 
 import androidx.annotation.Nullable;
 
-import com.hchen.hooktool.data.ToolData;
+import com.hchen.hooktool.HCData;
 import com.hchen.hooktool.hook.IHook;
 import com.hchen.hooktool.log.LogExpand;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 快捷转换
@@ -46,7 +47,7 @@ public final class ConvertHelper {
 
     @Nullable
     public static Class<?>[] arrayToClass(Object... objs) {
-        return arrayToClass(ToolData.mClassLoader, objs);
+        return arrayToClass(HCData.getClassLoader(), objs);
     }
 
     /**
@@ -56,7 +57,7 @@ public final class ConvertHelper {
     public static Class<?>[] arrayToClass(ClassLoader classLoader, Object... objs) {
         if (classLoader == null || objs == null) return null;
         if (objs.length == 0) return new Class<?>[]{};
-        ArrayList<Class<?>> classes = new ArrayList<>();
+        List<Class<?>> classes = new ArrayList<>();
         for (Object o : objs) {
             if (o instanceof Class<?> c) {
                 classes.add(c);
