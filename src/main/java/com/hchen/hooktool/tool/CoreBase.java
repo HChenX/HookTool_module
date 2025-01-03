@@ -27,10 +27,10 @@ import static com.hchen.hooktool.log.LogExpand.getTag;
 import static com.hchen.hooktool.log.XposedLog.logE;
 import static com.hchen.hooktool.log.XposedLog.logI;
 import static com.hchen.hooktool.log.XposedLog.logW;
+import static com.hchen.hooktool.tool.CoreTool.callMethod;
+import static com.hchen.hooktool.tool.CoreTool.callStaticMethod;
 import static com.hchen.hooktool.tool.CoreTool.findConstructor;
 import static com.hchen.hooktool.tool.CoreTool.findMethod;
-
-import androidx.annotation.Nullable;
 
 import com.hchen.hooktool.helper.TryHelper;
 import com.hchen.hooktool.hook.IHook;
@@ -40,12 +40,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
@@ -61,14 +59,9 @@ final class CoreBase {
     }
 
     static SingleMember<Class<?>> baseFindClass(String name, ClassLoader classLoader) {
-        return TryHelper.<Class<?>>createSingleMember(() -> {
-            Class<?> clazz = MemberCache.readClassCache(name, classLoader);
-            if (clazz == null) {
-                clazz = XposedHelpers.findClass(name, classLoader);
-                MemberCache.writeClassCache(clazz);
-            }
-            return clazz;
-        }).setErrMsg("Failed to find class!");
+        return TryHelper.<Class<?>>createSingleMember(() ->
+            XposedHelpers.findClass(name, classLoader)
+        ).setErrMsg("Failed to find class, classLoader: " + classLoader);
     }
 
     static SingleMember<Method> baseFindMethod(SingleMember<Class<?>> clazz, String name, Object... objs) {
@@ -79,15 +72,14 @@ final class CoreBase {
             new SingleMember<>(null));
     }
 
-    static List<Method> baseFindAllMethod(SingleMember<Class<?>> clazz, String name) {
+    static Method[] baseFindAllMethod(SingleMember<Class<?>> clazz, String name) {
         return clazz.reportOrRun(member ->
                 createSingleMember(
                     () -> Arrays.stream(member.getDeclaredMethods())
                         .filter(method -> name.equals(method.getName()))
-                        .collect(Collectors.toCollection(ArrayList::new))
-                ).setErrMsg("Failed to find all method!")
-                    .or(new ArrayList<>()),
-            new ArrayList<>());
+                        .toArray(Method[]::new)
+                ).setErrMsg("Failed to find all method!").or(new Method[0]),
+            new Method[0]);
     }
 
     static SingleMember<Constructor<?>> baseFindConstructor(SingleMember<Class<?>> clazz, Object... objs) {
@@ -98,13 +90,12 @@ final class CoreBase {
             new SingleMember<>(null));
     }
 
-    static List<Constructor<?>> baseFindAllConstructor(SingleMember<Class<?>> clazz) {
+    static Constructor<?>[] baseFindAllConstructor(SingleMember<Class<?>> clazz) {
         return clazz.reportOrRun(member ->
                 createSingleMember(
-                    () -> new ArrayList<>(Arrays.asList(member.getDeclaredConstructors()))
-                ).setErrMsg("Failed to find constructor!")
-                    .or(new ArrayList<>()),
-            new ArrayList<>());
+                    member::getDeclaredConstructors
+                ).setErrMsg("Failed to find constructor!").or(new Constructor<?>[0]),
+            new Constructor<?>[0]);
     }
 
     static SingleMember<Field> baseFindField(SingleMember<Class<?>> clazz, String name) {
@@ -146,12 +137,12 @@ final class CoreBase {
         }).orErrMag(null, "Failed to hook! \ndebug: " + debug);
     }
 
-    static <T extends Member> List<XC_MethodHook.Unhook> baseHookAll(List<T> members, IHook iHook) {
+    static <T extends Member> XC_MethodHook.Unhook[] baseHookAll(List<T> members, IHook iHook) {
         return baseHookAll(members.toArray(new Member[0]), iHook);
     }
 
-    static List<XC_MethodHook.Unhook> baseHookAll(Member[] members, IHook iHook) {
-        if (members == null) return new ArrayList<>();
+    static XC_MethodHook.Unhook[] baseHookAll(Member[] members, IHook iHook) {
+        if (members == null) return new XC_MethodHook.Unhook[0];
         String tag = getTag();
 
         return Arrays.stream(members).map(member ->
@@ -163,34 +154,32 @@ final class CoreBase {
                 ).orErrMag(null, "Failed to hook: " + member)
             )
             .filter(Objects::nonNull)
-            .collect(Collectors.toCollection(ArrayList::new));
+            .toArray(XC_MethodHook.Unhook[]::new);
     }
 
-    static XC_MethodHook.Unhook baseFirstUnhook(List<XC_MethodHook.Unhook> unhooks) {
-        if (unhooks.isEmpty()) return null;
-        return unhooks.get(0);
+    static XC_MethodHook.Unhook baseFirstUnhook(XC_MethodHook.Unhook[] unhooks) {
+        if (unhooks == null || unhooks.length == 0) return null;
+        return unhooks[0];
     }
 
-    static List<Method> baseFilterMethod(SingleMember<Class<?>> clazz, IMemberFilter<Method> iMemberFilter) {
+    static Method[] baseFilterMethod(SingleMember<Class<?>> clazz, IMemberFilter<Method> iMemberFilter) {
         return clazz.reportOrRun(member ->
                 createSingleMember(
                     () -> Arrays.stream(member.getDeclaredMethods())
                                         .filter(iMemberFilter::test)
-                        .collect(Collectors.toCollection(ArrayList::new))
-                ).setErrMsg("Failed to filter method!")
-                    .or(new ArrayList<>()),
-            new ArrayList<>());
+                        .toArray(Method[]::new)
+                ).setErrMsg("Failed to filter method!").or(new Method[0]),
+            new Method[0]);
     }
 
-    static List<Constructor<?>> baseFilterConstructor(SingleMember<Class<?>> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
+    static Constructor<?>[] baseFilterConstructor(SingleMember<Class<?>> clazz, IMemberFilter<Constructor<?>> iMemberFilter) {
         return clazz.reportOrRun(member ->
                 createSingleMember(
                     () -> Arrays.stream(member.getDeclaredConstructors())
                                         .filter(iMemberFilter::test)
-                        .collect(Collectors.toCollection(ArrayList::new))
-                ).setErrMsg("Failed to filter constructor!")
-                    .or(new ArrayList<>()),
-            new ArrayList<>());
+                        .toArray(Constructor<?>[]::new)
+                ).setErrMsg("Failed to filter constructor!").or(new Constructor<?>[0]),
+            new Constructor<?>[0]);
     }
 
     static Object baseCallMethod(Object instance, Object type, Object... objs) {
@@ -204,6 +193,15 @@ final class CoreBase {
             }).orErrMag(null, "Failed to call method!");
         }
         return null;
+    }
+
+    static Object baseCallSuperPrivateMethod(Object instance, String name, Object... objs) {
+        return run(() -> {
+            Method method = baseGetSuperPrivateMethod(instance.getClass(), name, objs);
+            if (method == null) return null;
+
+            return callMethod(instance, method, objs);
+        }).orErrMag(null, "Failed to call super private method!");
     }
 
     static Object baseGetField(Object instance, Object type) {
@@ -239,8 +237,7 @@ final class CoreBase {
         return clz.reportOrRun(member ->
                 createSingleMember(
                     () -> XposedHelpers.newInstance(member, objs)
-                ).setErrMsg("Failed to create new instance!")
-                                .or(null),
+                ).setErrMsg("Failed to create new instance!").or(null),
                 null);
     }
 
@@ -249,8 +246,7 @@ final class CoreBase {
             return clz.reportOrRun(member ->
                     createSingleMember(
                         () -> XposedHelpers.callStaticMethod(member, name, objs)
-                    ).setErrMsg("Failed to call static method!")
-                        .or(null),
+                    ).setErrMsg("Failed to call static method!").or(null),
                 null);
         else
             return run(() -> {
@@ -259,13 +255,23 @@ final class CoreBase {
             }).orErrMag(null, "Failed to call static method!");
     }
 
+    static Object baseCallSuperStaticPrivateMethod(SingleMember<Class<?>> clz, String name, Object... objs) {
+        return clz.reportOrRun(member ->
+                createSingleMember(() -> {
+                        Method method = baseGetSuperPrivateMethod(member, name, objs);
+                        if (method == null) return null;
+                        return callStaticMethod(method, objs);
+                    }
+                ).setErrMsg("Failed to call super private static field!").or(null),
+            null);
+    }
+
     static Object baseGetStaticField(SingleMember<Class<?>> clz, Field field, String name) {
         if (clz != null)
             return clz.reportOrRun(member ->
                     createSingleMember(
                         () -> XposedHelpers.getStaticObjectField(member, name)
-                    ).setErrMsg("Failed to get static field!")
-                        .or(null),
+                    ).setErrMsg("Failed to get static field!").or(null),
                 null);
         else
             return run(() -> {
@@ -280,8 +286,7 @@ final class CoreBase {
                     createSingleMember(() -> {
                         XposedHelpers.setStaticObjectField(member, name, value);
                         return true;
-                    }).setErrMsg("Failed to set static field!")
-                        .or(false),
+                    }).setErrMsg("Failed to set static field!").or(false),
                 false);
         else
             return run(() -> {
@@ -295,8 +300,7 @@ final class CoreBase {
         return clz.reportOrRun(member ->
                 createSingleMember(
                     () -> XposedHelpers.setAdditionalStaticField(member, key, value)
-                ).setErrMsg("Failed to set static additional instance!")
-                                .or(null),
+                ).setErrMsg("Failed to set static additional instance!").or(null),
                 null);
     }
 
@@ -304,8 +308,7 @@ final class CoreBase {
         return clz.reportOrRun(member ->
                 createSingleMember(
                     () -> XposedHelpers.getAdditionalStaticField(member, key)
-                ).setErrMsg("Failed to get static additional instance!")
-                                .or(null),
+                ).setErrMsg("Failed to get static additional instance!").or(null),
                 null);
     }
 
@@ -313,34 +316,27 @@ final class CoreBase {
         return clz.reportOrRun(member ->
                 createSingleMember(
                     () -> XposedHelpers.removeAdditionalStaticField(member, key)
-                ).setErrMsg("Failed to remove static additional instance!")
-                                .or(null),
+                ).setErrMsg("Failed to remove static additional instance!").or(null),
                 null);
     }
 
-    private final static class MemberCache {
-        private static final HashMap<String, Class<?>> mClassMap = new HashMap<>();
+    private static Method baseGetSuperPrivateMethod(Class<?> clz, String name, Object... objs) {
+        return run(() -> {
+            Method method = null;
+            Class<?> clazz = clz;
+            Class<?>[] params = arrayToClass(clazz.getClassLoader(), objs);
+            HashSet<Class<?>> paramsSet = new HashSet<>(Arrays.asList(params));
+            superWhile:
+            do {
+                for (Method m : clazz.getDeclaredMethods()) {
+                    if (m.getName().equals(name) && paramsSet.containsAll(Arrays.asList(m.getParameterTypes()))) {
+                        method = m;
+                        break superWhile;
+                    }
+                }
+            } while ((clazz = clazz.getSuperclass()) != null);
 
-        public static void writeClassCache(Class<?> clazz) {
-            if (clazz != null) {
-                ClassLoader classLoader = clazz.getClassLoader();
-                if (classLoader == null) classLoader = CoreTool.systemClassLoader;
-                String clazzId = classLoader + "#" + classLoader.hashCode() + "#" + clazz.getName();
-                mClassMap.put(clazzId, clazz);
-            }
-        }
-
-        @Nullable
-        public static Class<?> readClassCache(String name, ClassLoader classLoader) {
-            if (classLoader == null) classLoader = CoreTool.systemClassLoader;
-            String clazzId = classLoader + "#" + classLoader.hashCode() + "#" + name;
-            Class<?> cache = mClassMap.get(clazzId);
-            if (cache == null) {
-                classLoader = classLoader.getParent();
-                clazzId = classLoader + "#" + classLoader.hashCode() + "#" + name;
-                cache = mClassMap.get(clazzId);
-            }
-            return cache;
-        }
+            return method;
+        }).orErrMag(null, "Failed to get super private method!");
     }
 }
