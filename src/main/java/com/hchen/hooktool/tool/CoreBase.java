@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool.tool;
 
@@ -324,7 +324,7 @@ final class CoreBase {
         return run(() -> {
             Method method = null;
             Class<?> clazz = clz;
-            Class<?>[] params = arrayToClass(clazz.getClassLoader(), objs);
+            Class<?>[] params = XposedHelpers.getParameterTypes(objs);
             HashSet<Class<?>> paramsSet = new HashSet<>(Arrays.asList(params));
             superWhile:
             do {

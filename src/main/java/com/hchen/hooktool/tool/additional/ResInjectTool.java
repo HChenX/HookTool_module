@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool.tool.additional;
 
+import static com.hchen.hooktool.log.LogExpand.createRuntimeExceptionLog;
 import static com.hchen.hooktool.log.LogExpand.getStackTrace;
 import static com.hchen.hooktool.log.LogExpand.getTag;
 import static com.hchen.hooktool.log.XposedLog.logE;
@@ -271,8 +272,7 @@ public final class ResInjectTool {
             mModulePath = HCData.getModulePath() != null ? HCData.getModulePath() : null;
             if (mModulePath == null) {
                 unHookRes();
-                throw new RuntimeException(HCData.getInitTag() +
-                        "[" + getTag() + "][E]: Module path is null, Please init this in initStartupParam()!" + getStackTrace());
+                throw new RuntimeException(createRuntimeExceptionLog("Module path is null, Please init this in initStartupParam()!"));
             }
         }
         Method[] resMethods = Resources.class.getDeclaredMethods();

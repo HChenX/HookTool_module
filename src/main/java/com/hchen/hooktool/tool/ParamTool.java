@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool.tool;
 
@@ -108,8 +108,8 @@ public class ParamTool {
 
     private boolean checkIndex(int index) {
         if (argsLength() < index + 1) {
-            logE(PRIVATETAG, "Args available index length is: [" + (argsLength() - 1)
-                    + "] but index is : [" + index + "] , Exceeding!!" + getStackTrace());
+            logE(PRIVATETAG, "Args available index length is: [" + (argsLength() - 1) +
+                    "] but index is : [" + index + "] , Exceeding!!" + getStackTrace());
             return false;
         }
         return true;
