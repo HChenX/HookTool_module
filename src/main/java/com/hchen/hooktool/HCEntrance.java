@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool;
 
@@ -66,7 +66,8 @@ public abstract class HCEntrance implements IXposedHookLoadPackage, IXposedHookZ
                 return;
         }
 
-        if (HCData.getModulePackageName() != null && Objects.equals(HCData.getModulePackageName(), lpparam.packageName)) {
+        if (HCData.getModulePackageName() != null && !HCData.getModulePackageName().isEmpty()
+                && Objects.equals(HCData.getModulePackageName(), lpparam.packageName)) {
             initHCState();
         }
 

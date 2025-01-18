@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool.tool.additional;
 
@@ -68,7 +68,7 @@ public final class SystemPropTool {
 
     private static String classLoaderMethod(ClassLoader classLoader, String name) {
         return (String) Optional.ofNullable(InvokeTool.callStaticMethod(
-                InvokeTool.findClass("android.os.SystemProperties", classLoader),
+               "android.os.SystemProperties", classLoader,
                 "get", new Class[]{String.class}, name)).orElse("");
     }
 

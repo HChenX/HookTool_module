@@ -14,13 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.os.Parcelable;
 
+import com.hchen.hooktool.data.AppData;
 import com.hchen.hooktool.hook.IHook;
+import com.hchen.hooktool.tool.additional.PackageTool;
+import com.hchen.hooktool.tool.itool.IPackageInfoGetter;
+
+import java.util.ArrayList;
 
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -101,6 +110,16 @@ final class ToolTest extends BaseHC {
             }
         };
 
+        AppData appData = PackageTool.getPackagesByCode(new IPackageInfoGetter() {
+            @Override
+            public Parcelable[] packageInfoGetter(PackageManager pm) throws PackageManager.NameNotFoundException {
+                PackageInfo packageInfo = null;
+                ArrayList<PackageInfo> arrayList = new ArrayList<>();
+                return arrayList.toArray(new PackageInfo[0]);
+            }
+        })[0];
+        Bitmap bitmap = appData.icon;
+
         prefs().get("test_key", "0"); // 获取 prefs test_key 的值
         prefs().getBoolean("test_key_bool", false); // 获取 prefs test_key_bool 的值
 
@@ -113,13 +132,13 @@ final class ToolTest extends BaseHC {
         @Override
         public HCInit.BasicData initHC(HCInit.BasicData basicData) {
             return basicData.setTag("HookTool")
-                .setLogLevel(HCInit.LOG_D)
-                .setModulePackageName("com.hchen.demo")
-                .setPrefsName("myprefs") // 可选
-                .xPrefsAutoReload(true) // 可选
-                .initLogExpand(new String[]{
-                    "com.hchen.demo.hook"
-                });
+                    .setLogLevel(HCInit.LOG_D)
+                    .setModulePackageName("com.hchen.demo")
+                    .setPrefsName("myprefs") // 可选
+                    .xPrefsAutoReload(true) // 可选
+                    .initLogExpand(new String[]{
+                            "com.hchen.demo.hook"
+                    });
         }
 
         @Override

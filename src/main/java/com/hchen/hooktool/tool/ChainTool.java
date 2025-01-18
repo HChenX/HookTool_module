@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HookTool Contributions
+ * Copyright (C) 2023-2024 HChenX
  */
 package com.hchen.hooktool.tool;
 
@@ -151,10 +151,10 @@ public final class ChainTool {
                     members.add(new ChainData(findConstructor(clazz, cacheData.mParams).get()));
                 }
                 case TYPE_ANY_METHOD ->
-                    members.addAll(Arrays.stream(CoreTool.findAllMethod(clazz, cacheData.mName)).map(
+                        members.addAll(Arrays.stream(CoreTool.findAllMethod(clazz, cacheData.mName)).map(
                                 ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
                 case TYPE_ANY_CONSTRUCTOR ->
-                    members.addAll(Arrays.stream(CoreTool.findAllConstructor(clazz)).map(
+                        members.addAll(Arrays.stream(CoreTool.findAllConstructor(clazz)).map(
                                 ChainData::new).collect(Collectors.toCollection(ArrayList::new)));
                 default -> {
                     logW(getTag(), "Unknown type: " + cacheData.mType + getStackTrace());
