@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HChenX
+ * Copyright (C) 2023-2025 HChenX
  */
 package com.hchen.hooktool;
-
-import static com.hchen.hooktool.log.XposedLog.logE;
-import static com.hchen.hooktool.log.XposedLog.logI;
 
 import android.app.Application;
 import android.content.Context;
@@ -53,14 +50,18 @@ public abstract class BaseHC extends CoreTool {
     public static ClassLoader classLoader;
 
     /**
+     * 是否启用
+     */
+    protected boolean enabled() {
+        return true;
+    }
+
+    /**
      * handleLoadPackage 阶段。
      * <p>
      * Tip: 作为覆写使用，请勿直接调用！
      */
     protected abstract void init();
-
-    public void copy() {
-    }
 
     /**
      * 带 classLoader 的初始化。
@@ -94,12 +95,19 @@ public abstract class BaseHC extends CoreTool {
     protected void onApplicationAfter(Context context) {
     }
 
+    /**
+     * 发生崩溃时回调，可用于清理操作；不要在这里继续执行 hook 或可能引发崩溃的逻辑。
+     */
+    protected void onThrowable(Throwable throwable) {
+    }
+
     // 请在 handleLoadPackage 阶段调用。
     final public void onLoadPackage() {
         try {
-            init();
-            copy();
+            if (enabled())
+                init();
         } catch (Throwable e) {
+            onThrowable(e);
             logE(TAG, "Waring! will stop hook process!!", e);
         }
     }
@@ -107,25 +115,36 @@ public abstract class BaseHC extends CoreTool {
     // 请传入自定义的 classLoader。
     final public void onClassLoader(ClassLoader classLoader) {
         try {
-            init(classLoader);
+            if (enabled())
+                init(classLoader);
         } catch (Throwable e) {
+            onThrowable(e);
             logE(TAG, "Waring! will stop hook process!!", e);
         }
     }
 
     // Hook Application
     final public BaseHC onApplicationCreate() {
-        if (!mIApplications.contains(this))
-            mIApplications.add(this);
-        initApplicationHook();
+        try {
+            if (!enabled()) return this;
+
+            if (!mIApplications.contains(this))
+                mIApplications.add(this);
+            initApplicationHook();
+        } catch (Throwable e) {
+            onThrowable(e);
+            logE(TAG, "Waring! can't hook application!!", e);
+        }
         return this;
     }
 
     // 请在 initZygote 阶段调用。
     final public void onZygote() {
         try {
-            initZygote(HCData.getStartupParam());
+            if (enabled())
+                initZygote(HCData.getStartupParam());
         } catch (Throwable e) {
+            onThrowable(e);
             logE(TAG, "Waring! will stop hook process!!", e);
         }
     }

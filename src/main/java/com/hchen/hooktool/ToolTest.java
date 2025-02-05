@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HChenX
+ * Copyright (C) 2023-2025 HChenX
  */
 package com.hchen.hooktool;
 
@@ -50,23 +50,23 @@ final class ToolTest extends BaseHC {
     public void init() {
         // 链式
         chain("com.hchen.demo", method("test")
-                .hook(new IHook() {
-                    @Override
-                    public void before() {
-                        super.before();
-                    }
-                })
+            .hook(new IHook() {
+                @Override
+                public void before() {
+                    super.before();
+                }
+            })
 
-                .method("test1", String.class)
-                .hook(new IHook() {
-                    @Override
-                    public void after() {
-                        super.after();
-                    }
-                })
+            .method("test1", String.class)
+            .hook(new IHook() {
+                @Override
+                public void after() {
+                    super.after();
+                }
+            })
 
-                .constructor()
-                .returnResult(false)
+            .constructor()
+            .returnResult(false)
         );
 
         hookMethod("com.hchen.demo", "test", new IHook() {
@@ -115,6 +115,7 @@ final class ToolTest extends BaseHC {
             public Parcelable[] packageInfoGetter(PackageManager pm) throws PackageManager.NameNotFoundException {
                 PackageInfo packageInfo = null;
                 ArrayList<PackageInfo> arrayList = new ArrayList<>();
+                arrayList.add(packageInfo);
                 return arrayList.toArray(new PackageInfo[0]);
             }
         })[0];
@@ -132,13 +133,13 @@ final class ToolTest extends BaseHC {
         @Override
         public HCInit.BasicData initHC(HCInit.BasicData basicData) {
             return basicData.setTag("HookTool")
-                    .setLogLevel(HCInit.LOG_D)
-                    .setModulePackageName("com.hchen.demo")
-                    .setPrefsName("myprefs") // 可选
-                    .xPrefsAutoReload(true) // 可选
-                    .initLogExpand(new String[]{
-                            "com.hchen.demo.hook"
-                    });
+                .setLogLevel(HCInit.LOG_D)
+                .setModulePackageName("com.hchen.demo")
+                .setPrefsName("myprefs") // 可选
+                .xPrefsAutoReload(true) // 可选
+                .initLogExpand(new String[]{
+                    "com.hchen.demo.hook"
+                });
         }
 
         @Override

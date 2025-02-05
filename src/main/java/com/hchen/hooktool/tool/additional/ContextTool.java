@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HChenX
+ * Copyright (C) 2023-2025 HChenX
  */
 package com.hchen.hooktool.tool.additional;
 
@@ -40,9 +40,9 @@ import java.util.concurrent.Executors;
 @SuppressLint({"PrivateApi", "SoonBlockedPrivateApi", "DiscouragedPrivateApi"})
 public final class ContextTool {
     @IntDef(value = {
-            FLAG_ALL,
-            FLAG_CURRENT_APP,
-            FlAG_ONLY_ANDROID
+        FLAG_ALL,
+        FLAG_CURRENT_APP,
+        FlAG_ONLY_ANDROID
     })
     @Retention(RetentionPolicy.SOURCE)
     private @interface Duration {

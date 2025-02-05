@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- * Copyright (C) 2023-2024 HChenX
+ * Copyright (C) 2023-2025 HChenX
  */
 package com.hchen.hooktool.tool.additional;
 
@@ -199,8 +199,8 @@ public class DeviceTool {
         if (!isMoreAndroidVersion(Build.VERSION_CODES.Q)) return false;
         try {
             Object osBrand = InvokeTool.callStaticMethod(
-                    "com.huawei.system.BuildEx",
-                    "getOsBrand", new Class[]{});
+                "com.huawei.system.BuildEx",
+                "getOsBrand", new Class[]{});
             return "Harmony".equalsIgnoreCase(String.valueOf(osBrand));
         } catch (Throwable throwable) {
             logE(getTag(), throwable);
@@ -222,7 +222,7 @@ public class DeviceTool {
         if (names == null) return false;
         for (String name : names) {
             if (Build.BRAND.toLowerCase().contains(name.toLowerCase())
-                    || Build.MANUFACTURER.toLowerCase().contains(name.toLowerCase())) {
+                || Build.MANUFACTURER.toLowerCase().contains(name.toLowerCase())) {
                 return true;
             }
         }
@@ -250,11 +250,34 @@ public class DeviceTool {
     }
 
     /**
-     * 是否是神色模式。
+     * 是否是深色模式。
      */
     public static boolean isDarkMode(Resources resources) {
-        return (resources.getConfiguration().uiMode &
-                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        return (resources.getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    public static int px2dp(Context context, float pxValue) {
+        // 获取屏幕密度（每英寸多少个像素点）
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
+    }
+
+    public static int px2sp(Context context, float pxValue) {
+        // 获取字体的缩放密度
+        float fontScale = context.getResources().getDisplayMetrics().scaledDensity;
+        return (int) (pxValue / fontScale + 0.5f);
+    }
+
+    public static int dp2px(Context context, float dpValue) {
+        // 获取屏幕密度
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    public static int sp2px(Context context, float spValue) {
+        // 获取字体的缩放密度
+        float fontScale = context.getResources().getDisplayMetrics().scaledDensity;
+        return (int) (spValue * fontScale + 0.5f);
     }
 
     /**
@@ -279,7 +302,7 @@ public class DeviceTool {
     private static boolean isPadByProp() {
         String mDeviceType = getProp("ro.build.characteristics", "default");
         return (mDeviceType != null && mDeviceType.toLowerCase().contains("tablet"))
-                || getProp("persist.sys.muiltdisplay_type", 0) == 2;
+            || getProp("persist.sys.muiltdisplay_type", 0) == 2;
     }
 
     private static boolean isPadBySize(Context context) {
